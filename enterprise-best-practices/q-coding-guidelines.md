@@ -61,7 +61,7 @@ File Organisation
 main:{[parms]
   / body of script
   }
-@[main;parms;{.ms.log.error "Error: ",x;exit 1}];
+@[main;parms;{.finos.log.error "Error: ",x;exit 1}];
 exit 0;
 ```
 
@@ -226,8 +226,8 @@ Compare this:
 // defaultvalue: Default value for the new column 
 // Example:
 // Adding a new column named noo to trade table with default value of 0h
-// .ms.dba.addCol[`:.;`trade;`noo;0h]
-.ms.dba.addCol:{[dbdir;table;colname;defaultvalue]
+// .finos.dba.addCol[`:.;`trade;`noo;0h]
+.finos.dba.addCol:{[dbdir;table;colname;defaultvalue]
 ```
 
 with this:
@@ -241,9 +241,9 @@ colname : Column name to be added (as symbol)
 defaultvalue: Default value for the new column 
 Example:
 Adding a new column named noo to trade table with default value of 0h
-.ms.dba.addCol[`:.;`trade;`noo;0h]
+.finos.dba.addCol[`:.;`trade;`noo;0h]
 \
-.ms.dba.addCol:{[dbdir;table;colname;defaultvalue]
+.finos.dba.addCol:{[dbdir;table;colname;defaultvalue]
 ```
 
 Declarations
@@ -520,8 +520,6 @@ f[x;;] .' L; / aha! f takes three params of which last two are elided
 
 -   Be aware of the contexts you use to avoid clashes with other
     libraries
-    -   `.ms` namespace is reserved for the firm's shared function
-        libraries
     -   any single letter namespace, and specifically `.q` and `.Q`, are
         reserved by Kx
 -   Use contexts to create libraries to separate from main context for
@@ -531,23 +529,23 @@ f[x;;] .' L; / aha! f takes three params of which last two are elided
 -   Global variable references in functions are bound to the current
     context when the function is defined
 -   Example of a function library:
-    -   `.ms.log` is the API context
-    -   `.ms.log.priv` is the private implementation context
-    -   all functions are defined inside `.ms.log`
+    -   `.finos.log` is the API context
+    -   `.finos.log.priv` is the private implementation context
+    -   all functions are defined inside `.finos.log`
     -   implementation functions are defined explicitly as
-        `.ms.log.priv.funcname`
+        `.finos.log.priv.funcname`
 
 
 ```
-\d .ms
+\d .finos
 // Implementation and globals
-.ms.log.priv.LEVELS:`emergency`alert`critical`error`warning`notice`info`debug;
-.ms.log.priv.h:0;
-.ms.log.priv.logMsg:{[p;m] ... }
+.finos.log.priv.LEVELS:`emergency`alert`critical`error`warning`notice`info`debug;
+.finos.log.priv.h:0;
+.finos.log.priv.logMsg:{[p;m] ... }
 // Public API
-.ms.log.init:{[x] ... }
-.ms.log.setLogLevel:{[x] ... }
-.ms.log.getLogLevel:{...}
+.finos.log.init:{[x] ... }
+.finos.log.setLogLevel:{[x] ... }
+.finos.log.getLogLevel:{...}
 ```
 
 ### Indexing and Evaluation
