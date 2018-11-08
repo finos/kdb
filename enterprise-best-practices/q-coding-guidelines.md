@@ -6,7 +6,7 @@ This is a collection of guidelines and best practices for `q`.
 Introduction
 ------------
 
-Why have code conventions ? It should be clear that readability of code
+Why have code conventions? It should be clear that readability of code
 is essential for code maintainability. This applies to all software
 languages, but becomes even more important in languages with such high
 density of notation as `q`.
@@ -15,8 +15,7 @@ density of notation as `q`.
 
 This initial release of these guidelines are based on notes and training
 materials authored by Jeff Borror, Charlie Skelton's (kx.com) guidelines
-and Stevan Apter's [Remarks on
-Style](http://www.nsl.com/papers/style.pdf).
+and Stevan Apter's [Remarks on Style](http://www.nsl.com/papers/style.pdf).
 
 ### Motivation
 
@@ -54,7 +53,6 @@ File Organisation
 -   beginning comments: use a comment block that lists Perforce keywords
     for filename, version, date and author info as well as a copyright
     notice
--   use [QDoc](QDoc) for generating automated docs for your code
 -   for batch processes, define a main function and invoke via protected
     evaluation to exit with a suitable return code (kdb always
     returns 0)
@@ -78,8 +76,7 @@ Naming Conventions
         `accident_wating_to_happen_`
 -   use camel case or all lower case for multiple word identifiers
     -   `longFunctionName` or `longfunctionname`
--   use namespaces judiciously (see [function
-    libraries](#Function_Libraries))
+-   use namespaces judiciously (see [function libraries](#function-libraries))
 -   don't use `.` in names, as this looks like a namespace but its
     validity is actually a parser bug, future versions of KDB+ may not
     support variables with `.` 's in.
@@ -192,7 +189,6 @@ Comments
     for you. Reading other people's code is much easier when succinct,
     relevant comments are provided. Other languages don't require per
     line comments but a single line of q can do a lot...
--   use [QDoc](QDoc) for generating automated docs for your code
 -   If you write short lines place the comments at the end of the line
     and align them
 
