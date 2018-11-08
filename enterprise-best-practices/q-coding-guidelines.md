@@ -1,10 +1,23 @@
 Q Coding Guidelines
 ===================
 
-This is a collection of guidelines and best practices for `q`.
+Table of Contents
+-----------------
+1. [Introduction](#introduction)
+1. [File Names](#file-names)
+1. [File Organisation](#file-organisation)
+1. [Naming Conventions](#naming-conventions)
+1. [Indentation](#indentation)
+1. [Comments](#comments)
+1. [Declarations](#declarations)
+1. [Statements](#statements)
+1. [White Space](#white-space)
+1. [Programming Practices](#programming-practices)
 
 Introduction
 ------------
+
+This is a collection of guidelines and best practices for `q`.
 
 Why have code conventions? It should be clear that readability of code
 is essential for code maintainability. This applies to all software
