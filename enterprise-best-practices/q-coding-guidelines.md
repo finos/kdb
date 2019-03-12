@@ -1,12 +1,25 @@
 Q Coding Guidelines
 ===================
 
-This is a collection of guidelines and best practices for `q`.
+Table of Contents
+-----------------
+1. [Introduction](#introduction)
+1. [File Names](#file-names)
+1. [File Organisation](#file-organisation)
+1. [Naming Conventions](#naming-conventions)
+1. [Indentation](#indentation)
+1. [Comments](#comments)
+1. [Declarations](#declarations)
+1. [Statements](#statements)
+1. [White Space](#white-space)
+1. [Programming Practices](#programming-practices)
 
 Introduction
 ------------
 
-Why have code conventions ? It should be clear that readability of code
+This is a collection of guidelines and best practices for `q`.
+
+Why have code conventions? It should be clear that readability of code
 is essential for code maintainability. This applies to all software
 languages, but becomes even more important in languages with such high
 density of notation as `q`.
@@ -15,8 +28,7 @@ density of notation as `q`.
 
 This initial release of these guidelines are based on notes and training
 materials authored by Jeff Borror, Charlie Skelton's (kx.com) guidelines
-and Stevan Apter's [Remarks on
-Style](http://www.nsl.com/papers/style.pdf).
+and Stevan Apter's [Remarks on Style](http://www.nsl.com/papers/style.pdf).
 
 ### Motivation
 
@@ -54,7 +66,6 @@ File Organisation
 -   beginning comments: use a comment block that lists Perforce keywords
     for filename, version, date and author info as well as a copyright
     notice
--   use [QDoc](QDoc) for generating automated docs for your code
 -   for batch processes, define a main function and invoke via protected
     evaluation to exit with a suitable return code (kdb always
     returns 0)
@@ -63,7 +74,7 @@ File Organisation
 main:{[parms]
   / body of script
   }
-@[main;parms;{.ms.log.error "Error: ",x;exit 1}];
+@[main;parms;{.finos.log.error "Error: ",x;exit 1}];
 exit 0;
 ```
 
@@ -78,8 +89,7 @@ Naming Conventions
         `accident_wating_to_happen_`
 -   use camel case or all lower case for multiple word identifiers
     -   `longFunctionName` or `longfunctionname`
--   use namespaces judiciously (see [function
-    libraries](#Function_Libraries))
+-   use namespaces judiciously (see [function libraries](#function-libraries))
 -   don't use `.` in names, as this looks like a namespace but its
     validity is actually a parser bug, future versions of KDB+ may not
     support variables with `.` 's in.
@@ -192,7 +202,6 @@ Comments
     for you. Reading other people's code is much easier when succinct,
     relevant comments are provided. Other languages don't require per
     line comments but a single line of q can do a lot...
--   use [QDoc](QDoc) for generating automated docs for your code
 -   If you write short lines place the comments at the end of the line
     and align them
 
@@ -230,8 +239,8 @@ Compare this:
 // defaultvalue: Default value for the new column 
 // Example:
 // Adding a new column named noo to trade table with default value of 0h
-// .ms.dba.addCol[`:.;`trade;`noo;0h]
-.ms.dba.addCol:{[dbdir;table;colname;defaultvalue]
+// .finos.dba.addCol[`:.;`trade;`noo;0h]
+.finos.dba.addCol:{[dbdir;table;colname;defaultvalue]
 ```
 
 with this:
@@ -245,9 +254,9 @@ colname : Column name to be added (as symbol)
 defaultvalue: Default value for the new column 
 Example:
 Adding a new column named noo to trade table with default value of 0h
-.ms.dba.addCol[`:.;`trade;`noo;0h]
+.finos.dba.addCol[`:.;`trade;`noo;0h]
 \
-.ms.dba.addCol:{[dbdir;table;colname;defaultvalue]
+.finos.dba.addCol:{[dbdir;table;colname;defaultvalue]
 ```
 
 Declarations
@@ -524,8 +533,6 @@ f[x;;] .' L; / aha! f takes three params of which last two are elided
 
 -   Be aware of the contexts you use to avoid clashes with other
     libraries
-    -   `.ms` namespace is reserved for the firm's shared function
-        libraries
     -   any single letter namespace, and specifically `.q` and `.Q`, are
         reserved by Kx
 -   Use contexts to create libraries to separate from main context for
@@ -535,23 +542,23 @@ f[x;;] .' L; / aha! f takes three params of which last two are elided
 -   Global variable references in functions are bound to the current
     context when the function is defined
 -   Example of a function library:
-    -   `.ms.log` is the API context
-    -   `.ms.log.priv` is the private implementation context
-    -   all functions are defined inside `.ms.log`
+    -   `.finos.log` is the API context
+    -   `.finos.log.priv` is the private implementation context
+    -   all functions are defined inside `.finos.log`
     -   implementation functions are defined explicitly as
-        `.ms.log.priv.funcname`
+        `.finos.log.priv.funcname`
 
 
 ```
-\d .ms
+\d .finos
 // Implementation and globals
-.ms.log.priv.LEVELS:`emergency`alert`critical`error`warning`notice`info`debug;
-.ms.log.priv.h:0;
-.ms.log.priv.logMsg:{[p;m] ... }
+.finos.log.priv.LEVELS:`emergency`alert`critical`error`warning`notice`info`debug;
+.finos.log.priv.h:0;
+.finos.log.priv.logMsg:{[p;m] ... }
 // Public API
-.ms.log.init:{[x] ... }
-.ms.log.setLogLevel:{[x] ... }
-.ms.log.getLogLevel:{...}
+.finos.log.init:{[x] ... }
+.finos.log.setLogLevel:{[x] ... }
+.finos.log.getLogLevel:{...}
 ```
 
 ### Indexing and Evaluation
