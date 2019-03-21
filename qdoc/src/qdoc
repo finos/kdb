@@ -1,0 +1,104 @@
+#!/usr/bin/perl
+
+#use strict;
+use warnings;
+
+use File::Find;
+use File::Spec::Functions qw(rel2abs);
+use File::Basename;
+my $dir = dirname(rel2abs($0));
+
+my $qdoc;
+
+$qdoc="$dir/qdoclex";
+
+my $naturaldocs="NaturalDocs";
+
+#CHECK FOR VALID INPUT
+checkargs();
+
+# COPY INTO TEMPORARY LOCATION
+
+my $tempdir="/var/tmp/".getpwuid($<)."/qdoc";
+my $sourcedir=$ARGV[0];
+my $destination=$ARGV[1];
+
+print  "Cleaning out current contents of the temporary directory\n";
+system "rm -rf $tempdir/*";
+print  "Creating temporary directory structure in: $tempdir \n";
+system "mkdir -p $tempdir/project";
+system "mkdir -p $tempdir/html";
+print  "Copying code temporary directory: $tempdir\n";
+system "cp -rL $sourcedir $tempdir";
+system "find $tempdir -type f -exec chmod 644 {} +";
+print  "Done.\n";
+
+#GENERATE DOCUMENTATION
+
+print "Finding all .q files.\n";
+find(\&wanted,$tempdir);
+print "Done.\n";
+
+print "Calling NaturalDocs.\n";
+my $command="$naturaldocs -i $tempdir -o html $tempdir/html -p $tempdir/project";
+print "Executing: $command\n";
+system $command;
+
+#COPY BACK TO TARGET
+
+print "Copying back completed documentation\n";
+system "mkdir -p $destination";
+system "cp -r $tempdir/html $destination";
+print "Done.\n";
+
+#CLEAN UP TEMPORARY LOCATION
+
+print "Removing temporary directory\n";
+system "rm -rf $tempdir";
+print "Documentation generated.\n";
+
+sub checkargs {
+   if(@ARGV < 2) {
+      print "Usage:\n";
+      print "qdoc [SOURCE DIRECTORY] [DESTINATION DIRECTORY]\n";
+      print " Where:\n";
+      print " [SOURCE FOLDER]: The directory structure containing .q files.\n";
+      print " [DESTINATION DIRECTORY]: The location you want the html output to go.\n";
+      exit 1;
+   }
+}
+
+sub wanted {
+    if ($_ =~ m/.*\.q$/) {
+        # It's a q file!
+        addSourceSection($_,$File::Find::dir);
+    }
+}
+
+sub addSourceSection {
+    my $filein=$_[1]."/".$_[0];
+    my $fileout=$filein.".out";
+    open(INPUT_FILE, $filein) || die("Could not open input file: ".$filein);
+    open(OUTPUT_FILE, ">$fileout") || die("Could not open output file: ".$fileout);
+
+    my $sourcesection = "///\n//Section: Source\n//\n//(start code)\n";
+
+    print OUTPUT_FILE "//File: ".$filein."\n\n";
+
+    while(<INPUT_FILE>) {
+        my $currentline = $_;
+        print OUTPUT_FILE $currentline;
+        $sourcesection = $sourcesection. "//".$currentline;
+    }
+
+    print OUTPUT_FILE $sourcesection;
+    print OUTPUT_FILE "//(end)\n";
+
+    close(INPUT_FILE);
+    close(OUTPUT_FILE);
+
+    $command="$qdoc $fileout > $filein";
+    print $command."\n";
+    system $command;
+}
+
