@@ -5,7 +5,7 @@ Introduction
 ------------
 
 Q can be a quirky and exceedingly terse language. For this reason
-thorough documentation is highly encouraged. Within the firm a solution
+thorough documentation is highly encouraged.  A solution
 has been engineered that uses
 [javadoc](http://java.sun.com/j2se/javadoc/writingdoccomments/) syntax
 to document your Q functions. It uses the
