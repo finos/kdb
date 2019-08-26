@@ -1,3 +1,4 @@
+///
 // Default authorization (authz) handlers for q (.z.ps / .z.pg).
 // Only useful if used in conjunction with authentication (authn) handlers!
 // i.e. : .z.pw / .z.ac
@@ -66,32 +67,54 @@
   userSym in .finos.authz_ro.priv.roUsers}
 
 
+.finos.authz_ro.params.filterVerbsLambdas:{[x]
+  /// Given a parameter list from parse[...],
+  //   build an identical tree, but error out
+  //   if anything executable is detected.
+
+  // Special case for general null.
+  if[x~(::); : x];
+
+  t:type x;
+  
+  // Recurse on general lists.
+  if[0h=t; : .z.s each x];
+  // Return anything that's a "pure data" type.
+  if[99h>=abs t; : x];
+  // Signal an error.
+  '"verbs/lambdas disallowed";
+ }
+
+
 /// List of functions that are allowed to be run by any user.
 // Make sure the list doesn't collapse into a symbol list by
 //  putting in a non-sym placeholder such as (::) if necessary.
 // Whitelist functions should check against an appropriate
 //  entitlements model.
-.finos.authz_ro.priv.whitelistedFunctions:(tables;`.Q.w;`.q.tables)
+.finos.authz_ro.priv.funcs:([func:enlist(::)];paramFilter:enlist(::))
 
-.finos.authz_ro.addWhitelistedFunctions:{[lambdaOrSymbolList]
+.finos.authz_ro.addFuncs:{[lambdaOrSymbolList]
   /// Add function(s) to whitelist.
-  .finos.authz_ro.priv.whitelistedFunctions::distinct .finos.authz_ro.priv.whitelistedFunctions,lambdaOrSymbolList;
+  `.finos.authz_ro.priv.funcs insert (lambdaOrSymbolList;count[lambdaOrSymbolList]#.finos.authz_ro.params.filterVerbsLambdas)
  }
 
-.finos.authz_ro.removeWhitelistedFunctions:{[lambdaOrSymbolList]
+.finos.authz_ro.addFuncs[(`.q.tables;`.Q.w;.q.tables)]
+
+.finos.authz_ro.removeFuncs:{[lambdaOrSymbolList]
   /// Remove function(s) from whitelist.
-  .finos.authz_ro.priv.whitelistedFunctions::.finos.authz_ro.priv.whitelistedFunctions except lambdaOrSymbolList;
+  delete from `.finos.authz_ro.priv.funcs where func~/:lambdaOrSymbolList;
  }
 
-.finos.authz_ro.getWhitelistedFunctions:{[]
+.finos.authz_ro.getFuncs:{[]
   /// Return current whitelist.
-  .finos.authz_ro.priv.whitelistedFunctions}
+  .finos.authz_ro.priv.funcs}
 
 
-.finos.authz_ro.isWhitelistedFunction:{[funcOrName]
-  /// Return 1b if funcOrName represents a function that can be
-  //  run by a user who is authorized for neither RW nor RO.
-  funcOrName in .finos.authz_ro.priv.whitelistedFunctions}
+.finos.authz_ro.getParamFilter:{[funcOrName]
+  /// Get function for filtering parameters of passed function.
+  //   An empty general list () or general null (::) will be returned
+  //   if funcOrName was not found.
+  exec first paramFilter from .finos.authz_ro.priv.funcs where func~\:funcOrName}
 
 
 .finos.authz_ro.valueFunc:{[x]
@@ -99,24 +122,27 @@
 
   // Get the parse tree form.
   // p:parse x;
-  p:$[10h=type x;
-      parse x;
-      (value;enlist x)];
+  p:$[10h=type x;parse x;x];
+  // For empty expression, just return null.
+  if[(0=count p)|p~(::) ; :(::)];
   // ReadWrite users get expressions processed using "eval".
   if[.finos.authz_ro.isRwUser .z.u; :eval p];
   // ReadOnly users get expressions processed using "reval".
-  if[.z.K >= 3.3;[if[.finos.authz_ro.isRoUser .z.u; :reval p]]];
-
-  // For empty expression, just return null.
-  if[(0=count p)|p~(::) ; :(::)];
+  if[.z.K >= 3.3;if[.finos.authz_ro.isRoUser .z.u; :reval p]];
   // Count not zero. Take the first item as the function.
-  f:$[10h=type x; first p; first x];
+  f:first p;
+
+  // Get paramFilter for the desired function.
+  paramFilter:.finos.authz_ro.getParamFilter f;
   // Bail out if function isn't in the whitelist.
-  if[not .finos.authz_ro.isWhitelistedFunction f;
+  if[any paramFilter~/:( ();(::) ) ;
       '"Not a whitelisted function: ",-3!f];
 
-  // Evaluate the parse tree symmetrically to reval case.
-  eval p};
+  // Filter the parameters and build a new parse tree.
+  p2:enlist[f], paramFilter 1_ p;
+
+  // Go ahead and eval.
+  eval p2}
 
 .finos.authz_ro.priv.orig_zph:.z.ph
 
@@ -126,8 +152,7 @@
   // Use names instead of values to allow overwriting
   //  of .ms.dotz.valueFunc with even more restrictive
   //  implementation (using E3, for example).
-  .z.ps:{`.finos.authz_ro.valueFunc x};
-  .z.pg:{`.finos.authz_ro.valueFunc x};
+  .z.ps:.z.pg:.z.pq:{`.finos.authz_ro.valueFunc x};
   system"x .z.ph";
  }
 
