@@ -1,0 +1,7 @@
+About:
+The *sa* tables are loaded from Bovespa feed journals (sa is the filter exchange code). They are modelled largely after the *ticksinit*, *options*, *spotter_quotes* and *spotter_prints* tables in ammdb. Exceptions the *<sa_tradestate>* and *<sa_firmcodes>* tables, which don't really have analagous tables other feed imports.
+
+One large difference between *ticksinit* and *<sa_ticksinit>* is that the former is loaded from actual trading system configuration. Since we don't currently have a Bovespa trading system, the list of tickers we import is hardcoded (in sa_util.q) and the underlier reference data is retrieved from P2.
+
+Similarly, the *<sa_options>* table differs from *options* in that it is not loaded from trading system configuration since there is none. Instead, the list of option specifications is loaded from the feed journal, filtered for the list of underliers in *<sa_ticksinit>*, and issueID is looked up in P2 based on underlier, strike, expiry and type. The list is also checked against the list of quoted options for the day (though missing options are only reported and don't cause load failure).
+
