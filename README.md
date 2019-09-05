@@ -3,19 +3,6 @@
 For information about the kdb+ Working Group, see:
 * https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Working+Group
 
-## Installation
-
-OS X & Linux:
-
-```sh
-npm install my-crazy-module --save
-```
-
-Windows:
-
-```sh
-edit autoexec.bat
-```
 
 ## Contributing
 
