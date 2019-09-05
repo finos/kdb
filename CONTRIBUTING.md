@@ -17,6 +17,7 @@ As a result, PRs submitted to the kdb+ Project cannot be accepted until you have
 
 Need an ICLA? Unsure if you are covered under an existing CCLA? Email [help@finos.org](mailto:help@finos.org?subject=CLA)
 
+
 # Contributing Issues
 
 ## Prerequisites
