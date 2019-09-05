@@ -1,4 +1,4 @@
-# Contributing to kdb+ Working Group
+# Contributing to FINOS kdb+ Project
 Thanks for taking the time to contribute!
 
 # Contributor License Agreement (CLA)
