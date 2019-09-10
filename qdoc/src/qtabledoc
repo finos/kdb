@@ -1,0 +1,240 @@
+#!/usr/bin/perl
+
+# documentation extractor for q table loader scripts.
+# scrapes special comments from loader files and outputs csv.
+
+# Example usage:
+#  ../bin/qtabledoc.pl -outdir web/qdocs/sa  -about web/qdocs/sa/sa_summary.txt -title 'Bovespa Tables' sa_firmcodes_loader.q  sa_options_loader.q   sa_prints_loader.q  sa_quotes_loader.q  sa_ticksinit_loader.q sa_tradestate_loader.q
+#
+
+use Getopt::Long; # core
+
+# TODO: add fcol pcol for keys
+my $verbose = 0;
+my $TABLE = 'table';
+my $DESC = 'desc';
+my $IDCOL = 'idcol'; # "primary key"
+my $SRC = 'src';
+my $OWNER = 'owner';
+my $SEEALSO = 'seealso';
+my $COL = 'col';
+my $NOTE = 'note';
+my $COLSEP = '::: ';
+my $SRCFILE = 'srcfile';
+my @COLS = ($TABLE, $DESC, $IDCOL, $SRC, $OWNER, $SEEALSO, $NOTE, $COL, $SRCFILE );
+
+
+sub logmsg {
+  my ($prefix,$msg,$level) = @_;
+  print STDERR $prefix . $msg . "\n" if $verbose >= $level;
+}
+
+sub debug {
+  my ($msg,$level) = @_;
+  $level = 1 if (!defined $level);
+  logmsg "### ", $msg, $level + 1;
+}
+
+sub info {
+  my ($msg,) = @_;
+  logmsg "", $msg, 1;
+}
+
+sub notice {
+  my ($msg,) = @_;
+  logmsg "", $msg, 0;
+}
+
+sub doCmd {
+  my ($cmd) = @_;
+  debug $cmd;
+  system $cmd;
+}
+
+sub isRelativePath {
+    my ($f) = @_;
+    return $f !~ m/\/.*/;
+}
+
+sub processInputFile {
+  my ($f) = @_;
+  debug "processInputFile $f\n";
+  unless ( isRelativePath($f) ) {
+    my $cwd = `ksh -c pwd`;
+    debug "CWD is $cwd";
+    chomp $cwd;
+    $f = "$cwd/$f";
+  }
+  info "Path $f";
+  open F,"<$f";
+  my @entries = ();
+  my %entry;
+  while (<F>) {
+      if (m/\@docs (.*)/) {
+	  # note: cyclical @docs tags will break this
+	  push @entries, processInputFile($1);
+      }
+      elsif (m/\@$TABLE (.*)/) {
+          if (0<scalar(%entry)) {
+	      push(@entries, {%entry});
+		  }
+		  %entry = ();
+		  $entry{$TABLE} = $1;
+          my $srcprefix;
+
+# CUSTOMIZE HERE: Make file paths clickable via web server?
+#		  if ( $f =~ /\/mypath\// ) {
+#			  $srcprefix = "http://webserver_for_mypath";
+#		  }
+
+		  $entry{$SRCFILE} = $srcprefix . $f;
+	  } elsif (m/\@col (.*)/) {
+	  debug "col -> $1\n";
+	  $entry{col} .= $COLSEP . $1; # append all col info
+      } elsif (m/\@(\w*)? (.*)/ ) {
+	  debug "$1 -> $2\n";
+          $entry{$1} = $2;
+      }
+  }
+  if (0 < scalar(%entry)) {
+      push(@entries, {%entry});
+  }
+  close F;
+  return @entries;
+}
+
+
+#outputs piped delimited in case you want to import it into q.
+#from there you could generate online help, join with meta, etc
+sub oldoutputDocs {
+  my @entries = @_;
+
+  return unless (0 < scalar @entries);
+  print join '|', @COLS;
+  print "\n";
+  foreach my $e (@entries) {
+      my @vals = ();
+      foreach my $col (@COLS) {
+	  push @vals, $e->{$col};
+      }
+      print join '|', @vals;
+      print "\n";
+  }
+}
+
+sub outputHeader {
+  my ($outfile, $title, $about) = @_;
+  open(OUTFILE, ">>$outfile");
+  print OUTFILE "Title: $title\n\n" if (defined $title);
+  if (defined $about) {
+      my $txt = `cat $about`;
+      print OUTFILE "$txt\n\n";
+  }
+  close OUTFILE;
+}
+
+sub trim {
+  my $s = shift;
+  $s =~ s/^\s+//;
+  $s =~ s/\s+$//;
+  return $s;
+}
+
+sub outputDocs {
+  my $outfile = shift;
+  my @entries = @_;
+
+  return unless (0 < scalar @entries);
+  open(OUTFILE, ">>$outfile");
+  foreach my $e (@entries) {
+      my $x;
+      print OUTFILE "Table: $x\n\n" unless (!defined ($x=$e->{$TABLE}));
+      print OUTFILE "$x\n" unless (!defined ($x=$e->{$DESC}));
+      my $coltext = $e->{$COL};
+      if (defined $coltext) {
+	  my @cols = split /$COLSEP/, $coltext;
+          if (0<scalar(@cols)) {
+	      print OUTFILE "\nColumns:\n";
+	      foreach my $col (@cols) {
+                  $col =~ m/(\w*)? (.*)/;
+                  next if ("" eq $1);
+		  print OUTFILE "$1 - $2\n";
+	      }
+          }
+      }
+      print OUTFILE "\nOwner:\n$x\n" unless (!defined ($x=$e->{$OWNER}));
+      print OUTFILE "\nNotes:\n$x\n" unless (!defined ($x=$e->{$NOTE}));
+      my @seealso = split /,/, $e->{$SEEALSO};
+      my $satext;
+      if (0 < scalar(@seealso))
+      {
+	  $satext = "";
+          foreach my $s (@seealso) {
+	      $satext .= "<". (trim $s) . ">\n"
+	  }
+      }
+      print OUTFILE "\nSee Also:\n$x\n" unless (!defined ($x=$satext));
+      print OUTFILE "\nData Source:\n$x\n" unless (!defined ($x=$e->{$SRC}));
+      print OUTFILE "\nSource File:\n$x\n" unless (!defined ($x=$e->{$SRCFILE}));
+      print OUTFILE "\n";
+  }
+  close OUTFILE;
+}
+
+sub usage_string {
+    return "Usage: $0 -outdir <outdir> [-about <about>] [-title <title>] [--verbose]";
+}
+
+my $NATRUALDOCS = 'NaturalDocs ';
+my $MKTEMP = '/bin/mktemp';
+my $MKTEMPDIR = "$MKTEMP -d";
+
+sub main {
+  my ($about, $title, $outdir, $help);
+  my $result = GetOptions ("about=s" => \$about,
+                           "title=s" => \$title,
+                           "outdir=s" => \$outdir,
+						   "verbose+" => \$verbose,
+						   "help" => \$help);
+  if ( $help ){
+      print usage_string;
+      exit;
+  }
+  elsif ( !defined $outdir) {
+      print STDERR "-outdir is required\n";
+      print usage_string;
+      die;
+  }
+  doCmd "mkdir -p $outdir";
+  info "Outdir is $outdir";
+  my $projectdir = `$MKTEMPDIR`;
+  chomp $projectdir;
+  info "Project dir is $projectdir";
+  my $srcdir = `$MKTEMPDIR`;
+  chomp $srcdir;
+  info "Src dir is $srcdir";
+  my $alias = 'qdoc';
+  if (defined $title) {
+    $alias = $title;
+    $alias =~ s/\s//g;
+  }
+  info "Alias is $alias";
+  my $outfile = `$MKTEMP -p $srcdir $alias.txt.XXXXXXXXXX`;
+  chomp $outfile;
+  info "Outfile is $outfile";
+  doCmd "ln -s $outfile $srcdir/$alias.txt";
+
+  my @entries = ();
+  while (@ARGV) {
+      my $file = shift @ARGV;
+      push @entries, processInputFile $file;
+  }
+  @entries = sort {$a->{$TABLE} cmp $b->{$TABLE}} @entries;
+  outputHeader($outfile, $title, $about);
+  outputDocs($outfile, @entries);
+  doCmd "$NATRUALDOCS -i $srcdir -p $projectdir -o html $outdir";
+  doCmd "rm -rf $projectdir";
+  doCmd "rm -rf $srcdir";
+}
+
+main();
