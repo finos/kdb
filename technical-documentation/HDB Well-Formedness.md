@@ -78,7 +78,7 @@ This rule overrides all others.
 
 Each file whose name ends in an extension of exactly one letter (`x like"*.?"`) is code. If the argument given to `q` or to `\l` is not "`.`", such files are executed in lexicographic order by name after all other elements have been loaded; otherwise they are ignored.
 
-As q is currently shipped, it is an error for such a file to have an extension other than `.q` or `.k`, as these are the only languages recognized.<sup>[2](#user-content-notebadcode)</sup>
+As q is currently shipped, it is an error for such a file to have an extension other than `.q` or `.k`, as these are the only languages supported by default.<sup>[2](#user-content-otherlanguages), [3](#user-content-notebadcode)</sup>
 
 ### <a id="SerializedqData"></a>[Serialized q Data](#user-content-serializedqdata)
 
@@ -108,7 +108,7 @@ Each directory whose name starts with a digit is a partition. The tables within 
 
 An HDB which contains partitions is a partitioned HDB.
 
-The partitioning field of a partitioned HDB is determined by the name of the first partition: if it is 10, 7, or 4 characters long, the field is `` `date``, `` `month``, or `` `year``, respectively; otherwise it is `` `int``.<sup>[3](#user-content-noteintlong), [4](#user-content-noteintyear)</sup>
+The partitioning field of a partitioned HDB is determined by the name of the first partition: if it is 10, 7, or 4 characters long, the field is `` `date``, `` `month``, or `` `year``, respectively; otherwise it is `` `int``.<sup>[4](#user-content-noteintlong), [5](#user-content-noteintyear)</sup>
 
 A partition is a directory whose name starts with a digit and which contains only splayed tables.
 
@@ -118,7 +118,7 @@ It is an error for a partition to contain anything other than splayed tables.
 
 It is an error for a partition to exist with a name which produces a null value when cast to the partitioning field of its HDB.
 
-It is an error for all partitions not to be of the same [schema](#user-content-onschemas): for each table present in any partition, it must exist with the same schema in all partitions.<sup>[5](#user-content-note.q.bv)</sup>
+It is an error for all partitions not to be of the same [schema](#user-content-onschemas): for each table present in any partition, it must exist with the same schema in all partitions.<sup>[6](#user-content-note.q.bv)</sup>
 
 Note that it is ***not*** an error for all partitions to be empty.
 
@@ -130,7 +130,7 @@ An HDB which contains a `par.txt` file is a both a segmented HDB and a partition
 
 An HDB which contains only partitions and is referred to by a `par.txt` file in another HDB is a segment of that HDB.
 
-The partitioning field of a segmented HDB is the partitioning field of its first non-empty segment, where segments are ordered by their order in `par.txt`.<sup>[6](#user-content-noteintyearseg)</sup>
+The partitioning field of a segmented HDB is the partitioning field of its first non-empty segment, where segments are ordered by their order in `par.txt`.<sup>[7](#user-content-noteintyearseg)</sup>
 
 It is an error for the `par.txt` file of a segmented HDB to be empty.
 
@@ -144,9 +144,9 @@ It is an error for a segment of an HDB to contain anything other than partitions
 
 It is an error for a segment of an HDB to contain any directory whose name produces a null value when cast to the partitioning field of that HDB. In particular, it is an error for all segments of an HDB not to have the same partitioning field.
 
-It is an error for all segments of an HDB not to be of the same [schema](#user-content-onschemas): for each table present in any partition of any segment of an HDB, it must exist with the same schema in all partitions of all segments of that HDB.<sup>[5](#user-content-note.q.bv)</sup>
+It is an error for all segments of an HDB not to be of the same [schema](#user-content-onschemas): for each table present in any partition of any segment of an HDB, it must exist with the same schema in all partitions of all segments of that HDB.<sup>[6](#user-content-note.q.bv)</sup>
 
-Note that it is ***not*** an error for a given partition to exist in more than one segment of an HDB (i.e. for the segment-to-partition mapping to be many-to-many, not one-to-many). If any partition exists in more than one segment of an HDB, `.Q.u` is set to `0b` when that HDB is loaded, and the HDB is a non-orthogonally-segmented HDB. Queries executed on such HDBs may need to differ from those executed on orthogonally-segmented HDBs in order to return a result of the expected rank, and may also suffer performance problems; further analysis of such HDBs is outside the scope of this work.<sup>[7](#user-content-notemultisegment)</sup>
+Note that it is ***not*** an error for a given partition to exist in more than one segment of an HDB (i.e. for the segment-to-partition mapping to be many-to-many, not one-to-many). If any partition exists in more than one segment of an HDB, `.Q.u` is set to `0b` when that HDB is loaded, and the HDB is a non-orthogonally-segmented HDB. Queries executed on such HDBs may need to differ from those executed on orthogonally-segmented HDBs in order to return a result of the expected rank, and may also suffer performance problems; further analysis of such HDBs is outside the scope of this work.<sup>[8](#user-content-notemultisegment)</sup>
 
 ### <a id="HTML"></a>[HTML](#user-content-html)
 
@@ -172,16 +172,18 @@ More complex nested structures are possible; these are created by the presence o
 
 1. <a id="noteEmptyHDB"></a>An empty directory is a valid HDB.
 
-2. <a id="noteBadCode"></a>It is of course also an error for such a file not to be valid code in its indicated language, but this is not precisely a *structural* error in the HDB.
+2. <a id="otherLanguages"></a>Other available languages include [`s`](https://github.com/KxSystems/kdb/blob/master/s.k), an implementation of ANSI SQL, and `p`, which is supported when [embedPy](https://github.com/KxSystems/embedPy) is loaded.
 
-3. <a id="noteIntLong"></a>The name `` `int`` is a legacy from prior versions of q: the global vector `` `int`` and the `` `int`` column of partitioned tables in an `` `int``-partitioned HDB are actually of type `` `long``.
+3. <a id="noteBadCode"></a>It is of course also an error for such a file not to be valid code in its indicated language, but this is not precisely a *structural* error in the HDB.
 
-4. <a id="noteIntYear"></a>An HDB meant to be partitioned by `int` is loaded as `year`-partitioned if its first partition's name is a four-digit number. A dummy partition named `0` or `1` (containing [schema-conformant](#user-content-onschemas), but empty, tables) prevents this.
+4. <a id="noteIntLong"></a>The name `` `int`` is a legacy from prior versions of q: the global vector `` `int`` and the `` `int`` column of partitioned tables in an `` `int``-partitioned HDB are actually of type `` `long``.
+
+5. <a id="noteIntYear"></a>An HDB meant to be partitioned by `int` is loaded as `year`-partitioned if its first partition's name is a four-digit number. A dummy partition named `0` or `1` (containing [schema-conformant](#user-content-onschemas), but empty, tables) prevents this.
 
    (Conversely, a `year`-partitioned HDB dealing with any years before AD 1000, in the unlikely event that any such HDB exists, is loaded as `int`-partitioned; zero-padding its first partition to four digits prevents this. Similarly, a `year`-partitioned HDB dealing exclusively with years after AD 9999 is loaded as `int`-partitioned; a dummy partition named `1000` prevents this.)
 
-5. <a id="note.Q.bv"></a>This requirement may be relaxed by invoking [`.Q.bv`](https://code.kx.com/v2/ref/dotq/#qbv-build-vp), but that option has certain limitations; e.g., queries using linking columns fail if they would otherwise rely on the functionality it activates. Further discussion is outside the scope of this work.
+6. <a id="note.Q.bv"></a>This requirement may be relaxed by invoking [`.Q.bv`](https://code.kx.com/v2/ref/dotq/#qbv-build-vp), but that option has certain limitations; e.g., queries using linking columns fail if they would otherwise rely on the functionality it activates. Further discussion is outside the scope of this work.
 
-6. <a id="noteIntYearSeg"></a>The considerations in <sup>[4](#user-content-noteintyear)</sup> also apply here.
+7. <a id="noteIntYearSeg"></a>The considerations in <sup>[5](#user-content-noteintyear)</sup> also apply here.
 
-7. <a id="noteMultiSegment"></a>Support for non-orthogonal segmentation originates in constraints on prior versions of q that are no longer applicable; there are very few good reasons for using this feature in modern versions of q, and many reasons for avoiding it.
+8. <a id="noteMultiSegment"></a>Support for non-orthogonal segmentation originates in constraints on prior versions of q that are no longer applicable; there are very few good reasons for using this feature in modern versions of q, and many reasons for avoiding it.
