@@ -11,15 +11,6 @@
 //Can be overridden by user.
 .finos.conn.errorTrapAt:@[;;];
 
-.finos.conn.priv.argsChecker:{[connDict]
-    //Argument validation
-    if[-11h<>type connDict`name;
-      '"Invalid name type"];
-    //Check to see if this name is already in use
-    if[connDict[`name] in exec name from .finos.conn.priv.connections;
-      '"Name already exists"];
-    };
-
 ///
 // Open a new connection to a KDB+ server.
 // @param name Name (symbol) for this connection, must be unique
@@ -37,7 +28,12 @@
     //set defaults
     connection:.finos.conn.priv.defaultConnRow,options,`name`addresses!(name;addresses);
     if[not `timeout in key connection; connection[`timeout]:.finos.conn.defaultOpenConnTimeout];
-    .finos.conn.priv.argsChecker connection;
+    //Argument validation
+    if[-11h<>type connection`name;
+      '"Invalid name type"];
+    //Check to see if this name is already in use
+    if[connection[`name] in exec name from .finos.conn.priv.connections;
+      '"Name already exists"];
 
     extraCols:(key[connection] except cols[.finos.conn.priv.connections]) except`fd`timerId;
     if[0<count extraCols;
@@ -95,7 +91,7 @@
 
 .finos.conn.priv.resolverErrorCallback:{[connName;hostport;error]
     .finos.conn.log"failed to resolve ",string[connName]," hostport ",hostport,": ",error;
-    ""};
+    ()};    //must return a list of hostports to try
 
 .finos.conn.ccbErrorHandler:{[connName;err]
     .finos.conn.log"Connect callback threw signal: \"",err,"\" for conn: ",string connName;
@@ -107,13 +103,13 @@
 
 .finos.conn.rcbErrorHandler:{[connName;err]
     .finos.conn.log"Registration callback threw signal: \"", err, "\" for conn: ", string connName;
-    ()!()};
+    ()!()}; //must return a placeholder that is compatible with the return value of a successful rcb
 
 ///
 // Resolve a connection string. This function can be overridden by the user.
 // @param hostport The connection string passed to .finos.conn.open. Always a string.
-// @return The actual connection string that can be passed to hopen.
-.finos.conn.resolveAddress:(::);
+// @return A list of actual connection strings that can be passed to hopen.
+.finos.conn.resolveAddress:enlist;
 
 .finos.conn.priv.lazyRetryTime:00:10:00;
 .finos.conn.priv.lazyConnBlacklist:([addr:()]; lastErrorTime:`timestamp$());
@@ -131,7 +127,7 @@
     while[null[fd] and i<n;
         hostport:hostports i;
         cont:1b;
-        resolvedHostport:"";
+        resolvedHostports:();
         if[any hostport~/:exec addr from .finos.conn.priv.lazyConnBlacklist;
             $[.z.P>.finos.conn.priv.lazyConnBlacklist[hostport;`lastErrorTime]+.finos.conn.priv.lazyRetryTime;
                 delete from .finos.conn.priv.lazyConnBlacklist where addr~\:hostport;
@@ -139,10 +135,13 @@
             ];
         ];
         if[cont;
-            resolvedHostport:@[.finos.conn.resolveAddress;hostport;.finos.conn.priv.resolverErrorCallback[connName;hostport;]];
+            resolvedHostports:@[.finos.conn.resolveAddress;hostport;.finos.conn.priv.resolverErrorCallback[connName;hostport;]];
         ];
-        if[0<count resolvedHostport;
+        while[(null fd) and 0<count resolvedHostports;
+            resolvedHostport:first resolvedHostports;
+            resolvedHostports:1_resolvedHostports;
             if[not null fd:.finos.conn.errorTrapAt[hopen;resolvedHostport;'[{0Ni};]ecb[connName;hostport;]];
+                resolvedHostports:();
                 .finos.conn.log"Connection ",string[connName]," connected to ",hostport;
                 .finos.conn.priv.connections[connName;`fd]:fd;
                 //Invoke the connect cb inside protected evaluation
@@ -159,10 +158,10 @@
                     @[.finos.conn.asyncFlush;connName;{}]; //fails with 'domain if handle=0
                 ];
             ];
-            if[(null fd) and .finos.conn.priv.connections[connName;`lazy];
-                .finos.conn.log"Blacklisting address ",hostport," for ",string[.finos.conn.priv.lazyRetryTime];
-                `.finos.conn.priv.lazyConnBlacklist upsert enlist`addr`lastErrorTime!(hostport;.z.P);
-            ];
+        ];
+        if[(null fd) and .finos.conn.priv.connections[connName;`lazy];
+            .finos.conn.log"Blacklisting address ",hostport," for ",string[.finos.conn.priv.lazyRetryTime];
+            `.finos.conn.priv.lazyConnBlacklist upsert enlist`addr`lastErrorTime!(hostport;.z.P);
         ];
         i+:1;
     ];
@@ -260,7 +259,7 @@
 // @param name Connection name to use
 // @throws error if there is no connection with this name
 //
-.finos.conn.asyncFlush:{[name]
+.finos.conn.syncFlush:{[name]
     .finos.conn.syncSend[name;""];
     };
 
@@ -324,7 +323,7 @@
 .finos.conn.priv.oldZwc:@[get;`.z.wc;{}];
 
 ///
-// This callback registers basic info about the client and calls an user callbacks.
+// This callback registers basic info about the client and calls any user callbacks registered by .finos.conn.addClientConnectCallback.
 .z.po:{[existingZpo;myfd]
     // Invoke the old .z.po as we're chaining these together
     `.finos.conn.priv.clientList upsert `fd`protocol`user`host`connID!(myfd;`kdb;.z.u;.Q.host[.z.a];.finos.conn.priv.lastClientConnID+:1);
@@ -337,7 +336,7 @@
 // our fd's, then schedule a reconnect attempt except for lazy connections.
 //
 // Note: We chain any existing .z.pc so that will be invoked _before_ this
-// method.
+// method. Additionally any user callbacks defined by .finos.conn.addClientDisconnectCallback are called.
 //
 // @param fd file descriptor that was disconnected
 //
@@ -365,16 +364,16 @@
     }.finos.conn.priv.oldZpc;
 
 ///
-// This callback registers basic info about the client and calls an user callbacks.
+// This callback registers basic info about the client and calls any user callbacks registered by .finos.conn.addClientWSConnectCallback.
 .z.wo:{[existingZwo;myfd]
-    // Invoke the old .z.pw as we're chaining these together
+    // Invoke the old .z.wo as we're chaining these together
     `.finos.conn.priv.clientList upsert `fd`protocol`user`host`connID!(x;`ws;.z.u;.Q.host[.z.a];.finos.conn.priv.lastClientConnID+:1);
         {[x;f]@[value f;x;{[f;h;e].finos.conn.log"Client Websocket connect callback ",string[f]," threw error ",e," for handle ",string h}[f;x]]}[myfd]each .finos.conn.priv.clientWSConnectCallbacks;
     existingZwo[myfd];
     }.finos.conn.priv.oldZwo;
 
 ///
-// This callback calls an user callbacks.
+// This callback calls any user callbacks registered by .finos.conn.addClientWSDisconnectCallback.
 .z.wc:{[existingZwc;myfd]
     // Invoke the old .z.wc as we're chaining these together
     existingZwc[myfd];
