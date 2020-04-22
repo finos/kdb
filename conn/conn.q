@@ -1,14 +1,20 @@
 .finos.conn.priv.connections:([name:`$()]lazy:`boolean$();fd:`int$();addresses:();timeout:`long$();ccb:();dcb:();rcb:();ecb:();timerId:`int$());
 .finos.conn.priv.defaultConnRow:`fd`lazy`ccb`dcb`rcb`ecb`timerId!(0N;0b;(::);(::);(::);(::);0N);
 
+///
+// The default timeout for opening connections, if the `timeout option is not provided.
 .finos.conn.defaultOpenConnTimeout:300000;  //5 minutes
 .finos.conn.priv.initialBackoff:500;
 .finos.conn.priv.maxBackoff:30000;
 
-//to replace with finos logging utils?
-.finos.conn.log:{-2 x};
+///
+// Logging function.
+// To replace with finos logging utils?
+.finos.conn.log:{-1 string[.z.P]," .finos.init ",x};
 
-//Can be overridden by user.
+///
+// Error trapping function for opening connections and invoking callbacks.
+// Can be overwritten by user.
 .finos.conn.errorTrapAt:@[;;];
 
 ///
@@ -22,6 +28,7 @@
 //          dcb: disconnect callback
 //          rcb: registration callback. Set to 0b to disable registration when connecting to a server not using .finos.conn.
 //          ecb: error callback
+// @return none
 .finos.conn.open:{[name;addresses;options]
     if[type[addresses] in -11 10h; addresses:enlist addresses];
     if[11h=type addresses; addresses:string addresses];
@@ -46,10 +53,10 @@
     ];
     };
 
-
 ///
 // Removes the lazy attribute from a connection. Immediately schedules the connection if not already open.
 // @param connName Connection name
+// @return none
 .finos.conn.lazyToNormal:{[connName]
     if[not connName in exec name from .finos.conn.priv.connections;
         '"Connection not valid: ",string connName];
@@ -65,6 +72,7 @@
 ///
 // Adds the lazy attribute from a connection. However the connection is not closed.
 // @param connName Connection name
+// @return none
 .finos.conn.normalToLazy:{[connName]
     if[not connName in exec name from .finos.conn.priv.connections;
         '"Connection not valid: ",string connName];
@@ -93,20 +101,38 @@
     .finos.conn.log"failed to resolve ",string[connName]," hostport ",hostport,": ",error;
     ()};    //must return a list of hostports to try
 
+///
+// Called when a connection callback throws an error.
+// Can be overwritten by user.
+// @param connName Connection name
+// @param err Error message
+// @return none
 .finos.conn.ccbErrorHandler:{[connName;err]
     .finos.conn.log"Connect callback threw signal: \"",err,"\" for conn: ",string connName;
     };
 
+///
+// Called when a disconnection callback throws an error.
+// Can be overwritten by user.
+// @param connName Connection name
+// @param err Error message
+// @return none
 .finos.conn.dcbErrorHandler:{[connName;err]
     .finos.conn.log"Disconnect callback threw signal: \"", err, "\" for conn: ", string connName;
     };
 
+///
+// Called when a registration callback throws an error.
+// Can be overwritten by user.
+// @param connName Connection name
+// @param err Error message
+// @return A dictionary to make up for the failed callback.
 .finos.conn.rcbErrorHandler:{[connName;err]
     .finos.conn.log"Registration callback threw signal: \"", err, "\" for conn: ", string connName;
-    ()!()}; //must return a placeholder that is compatible with the return value of a successful rcb
+    ()!()}; 
 
 ///
-// Resolve a connection string. This function can be overridden by the user.
+// Resolve a connection string. This function can be overwritten by the user.
 // @param hostport The connection string passed to .finos.conn.open. Always a string.
 // @return A list of actual connection strings that can be passed to hopen.
 .finos.conn.resolveAddress:enlist;
@@ -178,11 +204,9 @@
 
 ///
 // Close an existing connection
-//
 // @param connName The name of the connection to close
-//
+// @return none
 // @throws error if there is no connection with this name
-//
 .finos.conn.close:{[connName]
     if[-11h<>type connName;
         '"Invalid type for connName"];
@@ -204,7 +228,7 @@
 
 ///
 // Returns the list of registered connections.
-//
+// @return A table with the columns matching the options to .finos.conn.open, plus fd for the connection handle.
 .finos.conn.list:{.finos.conn.priv.connections};
 
 .finos.conn.priv.lazyGetFd:{[connName]
@@ -222,50 +246,48 @@
 
 ///
 // Synchronously execute on this connection
-//
 // @param name Connection name to use
 // @param data Data to send
 // @return The result of the calculation
-//
 // @throws error if there is no connection with this name
-//
 .finos.conn.syncSend:{[name;data]
     fd:.finos.conn.priv.lazyGetFd[name];
     fd data};
 
 ///
 // Asnchronously execute on this connection
-//
 // @param name Connection name to use
 // @param data Data to send
+// @return none
 // @throws error if there is no connection with this name
-//
 .finos.conn.asyncSend:{[name;data]
     fd:.finos.conn.priv.lazyGetFd[name];
     neg[fd] data};
 
 ///
 // Blocks until all previous messages are handed over to the TCP stack
-//
 // @param name Connection name to use
+// @return none
 // @throws error if there is no connection with this name
-//
 .finos.conn.asyncFlush:{[name]
     .finos.conn.asyncSend[name;(::)]};
 
 ///
 // Sends a sync chaser on the connection, blocking until all async messages have been processed by the peer.
-//
 // @param name Connection name to use
+// @return none
 // @throws error if there is no connection with this name
-//
 .finos.conn.syncFlush:{[name]
     .finos.conn.syncSend[name;""];
     };
 
-.finos.conn.priv.lastClientConnID:0j;
+.finos.conn.priv.lastClientConnID:0;
 .finos.conn.priv.clientList:([fd:`int$()] protocol:`$(); app:`$(); conn:`$(); user:`$(); host:`$(); pid:`int$(); connID:`long$(); connStr:());
 
+///
+// Gets the list of connected clients.
+// @return A table containing info such as fd, protocol, app, conn, user, host, pid, connID, connStr.
+//         Some fields are filled in by the .finos.conn library, others are only filled in for registered clients.
 .finos.conn.clientList:{.finos.conn.priv.clientList};
 
 .finos.conn.priv.clientRegisterCallbacks:`$();
@@ -274,6 +296,11 @@
 .finos.conn.priv.clientWSDisconnectCallbacks:`$();
 .finos.conn.priv.clientWSConnectCallbacks:`$();
 
+///
+// Registers a client. This should be called from a client query such that .z.w is set. Automatically called on the server if a connection
+// is opened by .finos.conn.open.
+// @param items A dictionary that may contain the following items: app (symbol), conn (symbol), host (symbol), pid (int), connStr (string)
+// @return none
 .finos.conn.register:{[items]
     if[not 99h=type items; '"parameter to .finos.conn.register must be a dictionary"];
     if[0>system"p";if[0<>.z.w;:()]];   //don't overwrite globals in parallel process
@@ -294,12 +321,41 @@
     varname set varname,fn;
     };
 
+///
+// Add a callback that is called when a client registers. The callback receives a dictionary with the registration info.
+// @param Symbol containing the name of the callback function.
+// @return none
 .finos.conn.addClientRegisterCallback:{.finos.conn.priv.addGenericCallback[`clientRegisterCallbacks;x]};
+
+///
+// Add a callback that is called when a client connects using KDB protocol. Can be used in place of chaining .z.po.
+// @param Symbol containing the name of the callback function.
+// @return none
 .finos.conn.addClientConnectCallback:{.finos.conn.priv.addGenericCallback[`clientConnectCallbacks;x]};
+
+///
+// Add a callback that is called when a client disconnects using KDB protocol. Can be used in place of chaining .z.pc.
+// @param Symbol containing the name of the callback function.
+// @return none
 .finos.conn.addClientDisconnectCallback:{.finos.conn.priv.addGenericCallback[`clientDisconnectCallbacks;x]};
+
+///
+// Add a callback that is called when a client connects using WebSocket protocol. Can be used in place of chaining .z.wo.
+// @param Symbol containing the name of the callback function.
+// @return none
 .finos.conn.addClientWSConnectCallback:{.finos.conn.priv.addGenericCallback[`clientWSConnectCallbacks;x]};
+
+///
+// Add a callback that is called when a client diconnects using WebSocket protocol. Can be used in place of chaining .z.wc.
+// @param Symbol containing the name of the callback function.
+// @return none
 .finos.conn.addClientWSDisconnectCallback:{.finos.conn.priv.addGenericCallback[`clientWSDisconnectCallbacks;x]};
 
+///
+// Register on a connection. This is called automatically as part of the .finos.conn.open connection procedure.
+// @param conn Connection name
+// @param items Dictionary of registration parameters
+// @return none
 .finos.conn.registerRemote:{[conn;items]
     items:(`conn`pid!(`;.z.i)),items;
     $[type[conn] in -6 -7h;
@@ -324,12 +380,13 @@
 
 ///
 // This callback registers basic info about the client and calls any user callbacks registered by .finos.conn.addClientConnectCallback.
-.z.po:{[existingZpo;myfd]
+.finos.conn.priv.Zpo:{[existingZpo;myfd]
     // Invoke the old .z.po as we're chaining these together
     `.finos.conn.priv.clientList upsert `fd`protocol`user`host`connID!(myfd;`kdb;.z.u;.Q.host[.z.a];.finos.conn.priv.lastClientConnID+:1);
     {[x;f]@[value f;x;{[f;h;e].finos.conn.log"Client connect callback ",string[f]," threw error ",e," for handle ",string h}[f;x]]}[myfd]each .finos.conn.priv.clientConnectCallbacks;
     existingZpo[myfd];
-    }.finos.conn.priv.oldZpo;
+    };
+.z.po:.finos.conn.priv.Zpo .finos.conn.priv.oldZpo;
 
 ///
 // This callback is fired when a handle is disconnected. If this is one of
@@ -340,7 +397,7 @@
 //
 // @param fd file descriptor that was disconnected
 //
-.z.pc:{[existingZpc;myfd]
+.finos.conn.priv.Zpc:{[existingZpc;myfd]
     // Invoke the old .z.pc as we're chaining these together
     existingZpc[myfd];
 
@@ -361,22 +418,25 @@
     } each connNames;
     {[x;f]@[value f;x;{[f;h;e].finos.conn.log"Client disconnect callback ",string[f]," threw error ",e," for handle ",string h}[f;x]]}[myfd]each .finos.conn.priv.clientDisconnectCallbacks;
     delete from `.finos.conn.priv.clientList where fd=myfd;
-    }.finos.conn.priv.oldZpc;
+    };
+.z.pc:.finos.conn.priv.Zpc .finos.conn.priv.oldZpc;
 
 ///
 // This callback registers basic info about the client and calls any user callbacks registered by .finos.conn.addClientWSConnectCallback.
-.z.wo:{[existingZwo;myfd]
+.finos.conn.priv.Zwo:{[existingZwo;myfd]
     // Invoke the old .z.wo as we're chaining these together
     `.finos.conn.priv.clientList upsert `fd`protocol`user`host`connID!(x;`ws;.z.u;.Q.host[.z.a];.finos.conn.priv.lastClientConnID+:1);
         {[x;f]@[value f;x;{[f;h;e].finos.conn.log"Client Websocket connect callback ",string[f]," threw error ",e," for handle ",string h}[f;x]]}[myfd]each .finos.conn.priv.clientWSConnectCallbacks;
     existingZwo[myfd];
-    }.finos.conn.priv.oldZwo;
+    };
+.z.wo:.finos.conn.priv.Zwo .finos.conn.priv.oldZwo;
 
 ///
 // This callback calls any user callbacks registered by .finos.conn.addClientWSDisconnectCallback.
-.z.wc:{[existingZwc;myfd]
+.finos.conn.priv.Zwc:{[existingZwc;myfd]
     // Invoke the old .z.wc as we're chaining these together
     existingZwc[myfd];
     {[x;f]@[value f;x;{[f;h;e].finos.conn.log"Client Websocket disconnect callback ",string[f]," threw error ",e," for handle ",string h}[f;x]]}[myfd]each .finos.conn.priv.clientWSDisconnectCallbacks;
     delete from `.finos.conn.priv.clientList where fd=myfd;
-    }.finos.conn.priv.oldZwc;
+    };
+.z.wc:.finos.conn.priv.Zwc .finos.conn.priv.oldZwc;
