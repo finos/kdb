@@ -1,7 +1,13 @@
-.finos.init.logFn:{-1 string[.z.P]," .finos.init ",x};
+//Probably this should NOT be replaced by a finos logging function,
+//unless it supports contexts such that this can be its own context.
+//The reason is that log might be initialized and redirected to a file,
+//and log initialization itself might be done in an inithook.
+//That would cause a break in where the log goes (stdout vs log file)
+//which can make support tasks more difficult.
+.finos.init.log:{-1 string[.z.P]," .finos.init ",x};
 
 .finos.init.showState:{
-    .finos.init.logFn "\nhooks:\n",.Q.s[.finos.init.priv.hooks],"services:",.Q.s .finos.init.priv.services;
+    .finos.init.log "\nhooks:\n",.Q.s[.finos.init.priv.hooks],"services:",.Q.s .finos.init.priv.services;
     };
 
 .finos.init.add2:{[requires;funName;provides;userParams]
@@ -80,7 +86,7 @@
 
 .finos.init.priv.start:{
     .finos.init.customStart[];
-    .finos.init.logFn "Initial hooks:\n",(.Q.s .finos.init.priv.hooks);
+    .finos.init.log "Initial hooks:\n",(.Q.s .finos.init.priv.hooks);
     };
 
 //Can be overwritten by user. However there is only one of this, so if you end up fighting over it,
@@ -93,14 +99,14 @@
 
 //Can be overwritten by user.
 .finos.init.errorHandler:{[hook;e]
-    .finos.init.logFn:"Inithook ",.Q.s1[hook`fun]," died on error: ",e;
+    .finos.init.log:"Inithook ",.Q.s1[hook`fun]," died on error: ",e;
     exit 1;
     };
 
 .finos.init.priv.executeOne:{
     if[.finos.init.priv.finished; :0b];
     if[0 = count .finos.init.priv.hooks;
-        .finos.init.logFn "All hooks executed.";
+        .finos.init.log "All hooks executed.";
         .finos.init.priv.finished:1b;
         .finos.init.customEnd[];
         :0b];
@@ -111,7 +117,7 @@
 
     if[0 = count hooks;
         $[.finos.init.priv.debugRun;
-            .finos.init.logFn "WARNING: Runnable hooks executed and can't progress! Check remaining hooks with .finos.init.state[]";
+            .finos.init.log "WARNING: Runnable hooks executed and can't progress! Check remaining hooks with .finos.init.state[]";
             .finos.timer.addRelativeTimer[{.finos.init.priv.checkFinished[]};.finos.init.priv.initTimeout]
         ];
         :0b
@@ -120,7 +126,7 @@
     hook: first hooks;
     hookName: hook[`fun];
 
-    .finos.init.logFn "Executing ", string hookName;
+    .finos.init.log "Executing ", string hookName;
     start:.z.P;
     res:$[.finos.init.priv.debugRun;
         (`success;hookName[]);
@@ -163,7 +169,7 @@
         notProvided:(distinct raze exec requires from .finos.init.priv.hooks)except .finos.init.priv.services,raze exec provides from .finos.init.priv.hooks;
         msg: "ERROR: Init hooks not finished within ", (string .finos.init.priv.initTimeout), "ms!\n",
             "Waiting: ",.Q.s1[exec fun from .finos.init.priv.hooks],$[0<count notProvided;" Services not provided: ",.Q.s1[notProvided];""];
-        .finos.init.logFn msg;
+        .finos.init.log msg;
         .finos.init.state[];
         .alarm.dev.critical[`inithooksNoProgress;`;msg];
         exit 1];
