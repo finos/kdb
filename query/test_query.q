@@ -18,3 +18,12 @@
 asc[.test.t0syms]~asc ungroup .test.g0syms
 asc[.test.t1strs]~asc .finos.query.xungroup[`c1;.test.g1strs]
 asc[.test.t1strs]~asc .finos.query.ungroup .test.g1strs
+
+
+// dictionary to to get its keys renamed
+.test.dictToRename:`a`b`c!1 2 3
+.test.tabToRename:2#enlist .test.dictToRename
+.test.mappingDict:`a`b!`aa`bb
+
+(`aa`bb`c!1 2 3)~.finos.query.renameKeys[.test.mappingDict;.test.dictToRename]
+([]aa:1 1;bb:2 2;c:3 3)~.finos.query.renameCols[.test.mappingDict;.test.tabToRename]
