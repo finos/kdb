@@ -49,3 +49,18 @@
    ;ungroup t]}
 
 
+///
+// Rename keys of a dictionary without changing the order.
+.finos.query.renameKeys:{[mappingDict;inputDict]
+  fullMap:{x!x}[key inputDict],mappingDict;
+  r:fullMap[key inputDict]!value inputDict;
+  r}
+  
+
+
+///
+// Rename columns of a table without changing the order.
+.finos.query.renameCols:{[mappingDict;t]
+  r:flip .finos.query.renameKeys[mappingDict;flip t];
+  r}
+
