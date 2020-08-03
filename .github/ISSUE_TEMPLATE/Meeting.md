@@ -34,13 +34,11 @@ _// First Monday of every month_
 
 ### WebEx info
 **Webex** 
-
-https://finos.webex.com/finos/j.php?MTID=mfc9190e818fd85f9e3ece5166f23d920
+* https://finos.webex.com/finos/j.php?MTID=mfc9190e818fd85f9e3ece5166f23d920
 
 **Dial-in**
 - **US:** +1-415-655-0003 US Toll
 - **UK:** +44-20319-88141 UK Toll
 - **Access code:** 663 746 304
 - **GitHub Repo:** https://github.com/finos/kdb
-
-**Project Wiki Page:** https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Project
+- **Wiki Page:** https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Project
