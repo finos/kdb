@@ -36,7 +36,7 @@ _// First Monday of every month_
 **Webex** 
 * https://finos.webex.com/finos/j.php?MTID=mfc9190e818fd85f9e3ece5166f23d920
 
-**Dial-in**
+**Dial-in and Project Materials**
 - **US:** +1-415-655-0003 US Toll
 - **UK:** +44-20319-88141 UK Toll
 - **Access code:** 663 746 304
