@@ -6,7 +6,7 @@ about: To track KDB Project meeting agenda and attendance
 ## Date
 Monday DD MMM yyyy - 10am EST / 3pm BST
 
-_//First Monday of every month_
+_// First Monday of every month_
 
 ## Untracked attendees
 | Fullname | Affiliation | GitHub Username |
