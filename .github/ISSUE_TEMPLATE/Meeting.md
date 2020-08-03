@@ -40,5 +40,7 @@ _// First Monday of every month_
 - **US:** +1-415-655-0003 US Toll
 - **UK:** +44-20319-88141 UK Toll
 - **Access code:** 663 746 304
-- **GitHub Repo:** https://github.com/finos/kdb
-- **Wiki Page:** https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Project
+- **GitHub Repo:** 
+  - https://github.com/finos/kdb
+- **Wiki Page:** 
+  - https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Project
