@@ -1,6 +1,10 @@
 ---
-name: 🤝 KDB Project Call Meeting Agenda
+name: "\U0001F91D KDB Project Call Meeting Agenda"
 about: To track KDB Project meeting agenda and attendance
+title: DD MMM YYYY - KDB Project Call Meeting Agenda
+labels: meeting
+assignees: ''
+
 ---
 
 ## Date
