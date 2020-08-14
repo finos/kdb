@@ -48,3 +48,5 @@ _// First Monday of every month_
   - https://github.com/finos/kdb
 - **Wiki Page:** 
   - https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Project
+- **KDB Metrics on FINOS**
+  - https://metrics.finos.org/goto/033b15c80f0d08cab70f40f4358932f6
