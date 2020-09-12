@@ -103,12 +103,12 @@ Three kinds of client-facing behaviour are supported:
 3.  **Clone Per `q` Query.** When a `q` client issues a query, it
         will get its own client which stays alive long enough to send
         back the result and then exits.
-        
+
 4. **Spawn a task.** Clones the
         current process for a long-running operation that has a useful
         side effect or will connect back to the parent to send a
         result.
-        
+
 5. **Offload HTTP.** Clones the current process for a
         long-running operation that is supposed to return data to an
         HTTP client.
@@ -147,7 +147,7 @@ function.
 1.  `.finos.qclone.activateZphActive[]` will shim `.z.ph` to set
     `.finos.qclone.zphActive` to `1b` when in the context of an HTTP
     request (`0b` otherwise).
-    
+
 2. Your function can check for HTTP and
     then offload using
     `.finos.qclone.offloadHttp[lambdaThatReturnsString;contentType]`.
@@ -209,8 +209,6 @@ qclone QandA
 -   A: Up through kdb+ 2.2, the `-s <n>` option forked multiple
     processes, so it\'s something `q` used to do internally.
 
-<!-- -->
-
 -   Q: How is this different from having a pool of `q` processes behind
     a load balancer?
 -   A: The main advantages are:
@@ -219,26 +217,18 @@ qclone QandA
     -   ticker plant or master QDB process does not experience increased
         load due to extra subscribers
 
-<!-- -->
-
 -   Q: Does `fork(2)` interact properly with `mmap(2)`?
 -   A: According to [Wikipedia](http://en.wikipedia.org/wiki/Mmap),
     \"Memory shared by mmap is kept visible across a fork.\".
-
-<!-- -->
 
 -   Q: How will the `fork(2)` interact with on-disk tables?
 -   A: `q` mmaps column files in the context of a query. By the time the
     main thread is free to handle `.z.po`, there would be no active
     queries.
 
-<!-- -->
-
 -   Q: What\'s the intended use case for `qclone`?
 -   A: `qclone` was developed as a PoC as a possible solution for
     \"state of the world\" queries for the \"CPS Message Bus\" project.
-
-<!-- -->
 
 -   Q: What are the limitations of using `.z.ph` with `fork(2)` ?
 -   A: The HTTP workspace viewer works except for paging through large
@@ -246,8 +236,6 @@ qclone QandA
     is lost when the child dies after servicing the initial HTTP
     request. Customized `.z.ph` handlers which are stateless should be
     fine.
-
-<!-- -->
 
 -   Q: How does this affect other plugins?
 -   A: The child progress aggressively closes file descriptors. This
@@ -259,15 +247,11 @@ qclone QandA
     `qclone` is recommended only for `q` programs with %RED%plugins that
     do not use helper threads[]{.twiki-macro .ENDCOLOR}.
 
-<!-- -->
-
 -   Q: What happens to the console when a child is created?
 -   A: The child is attached to the same console as the parent, so input
     may go to the parent, child, or split between the two. It can make
     debugging more difficult, so a command line option to control
     whether `qclone` is active or not can be helpful.
-
-<!-- -->
 
 -   Q: Any other capacity issues to keep in mind?
 -   A: Clients using the `q` protocol to connect must be well behaved
@@ -275,8 +259,6 @@ qclone QandA
     mutation of the data, clients may end up consuming significant
     amounts of RAM. Any setup should be stress tested to check for file
     descriptor leaks, etc.
-
-<!-- -->
 
 -   Q: How do I control the number of child processes?
 -   A: The parent could shim `.finos.qclone.newChildHandler[]` so that it
@@ -290,9 +272,10 @@ Memory Accounting
 
 -   RSS (Resident Set Size) shown in `top(1)` doesn\'t account for the
     sharing between processes.
+
 -   The `smem` utility is a Python script which reports USS (Unique Set
     Size) and PSS (Proportional Set Size).
-    -   
+
 Spawning Example
 ----------------
 
