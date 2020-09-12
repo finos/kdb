@@ -1,14 +1,14 @@
 ---
 name: "\U0001F91D KDB Project Call Meeting Agenda"
 about: To track KDB Project meeting agenda and attendance
-title: DD MMM YYYY - KDB Project Call Meeting Agenda
+title: YYYY-MM-DD - KDB Project Call Meeting Agenda
 labels: meeting
 assignees: ''
 
 ---
 
 ## Date
-Monday DD MMM yyyy - 10am EST / 3pm BST
+Monday, Month DD, YYYY - 10am EST / 3pm BST
 
 _// First Monday of every month_
 
@@ -20,11 +20,10 @@ _// First Monday of every month_
 
 ## Agenda
 
-- [ ] Convene, roll call, welcome new people
-- [ ] Review action items from previous meetings
-- [ ] Approve previous meeting minutes
+- [ ] (5 min) Convene, roll call, welcome new people.
+- [ ] (5 min) Approve previous meeting minutes.
 - [ ] _Add Items Here_
-- [ ] AOB, Q&A & Adjourn
+- [ ] (5 min) AOB, Q&A, Adjourn.
 
 ## Decisions Made
 - [ ] Decision 1
