@@ -20,20 +20,20 @@ _// First Monday of every month_
 
 ## Agenda
 
-- [ ] (5 min) Convene, roll call, welcome new people.
-- [ ] (5 min) Approve previous meeting minutes.
-- [ ] _Add Items Here_
-- [ ] (5 min) AOB, Q&A, Adjourn.
+- (5 min) Convene, roll call, welcome new people.
+- (5 min) Approve previous meeting minutes.
+- _Add Items Here_
+- (5 min) AOB, Q&A, Adjourn.
 
 ## Decisions Made
-- [ ] Decision 1
-- [ ] Decision 2
-- [ ] ...
+- Decision 1
+- Decision 2
+- ...
 
 ## Action Items
-- [ ] Action 1
-- [ ] Action 2
-- [ ] ...
+- Action 1
+- Action 2
+- ...
 
 ### WebEx info
 **Webex** 
@@ -43,8 +43,9 @@ _// First Monday of every month_
 - **US:** +1-415-655-0003 US Toll
 - **UK:** +44-20319-88141 UK Toll
 - **Access code:** 663 746 304
-- **GitHub Repo:** 
+- **GitHub Repos:** 
   - https://github.com/finos/kdb
+  - https://github.com/finos/kdb-studio
 - **Wiki Page:** 
   - https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Project
 - **KDB Metrics on FINOS**
