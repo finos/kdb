@@ -12,7 +12,7 @@ Monday, Month DD, YYYY - 10am EST / 3pm BST
 
 _// First Monday of every month_
 
-## Untracked attendees
+## Attendees
 | Fullname | Affiliation | GitHub Username |
 |:-----|:-----|:-----|
 | | | |
