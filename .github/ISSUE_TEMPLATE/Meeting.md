@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 ## Date
-Monday, Month DD, YYYY - 10am EST / 3pm BST
+Monday, Month DD, YYYY - 9:30am EST / 2:30pm BST
 
 _// First Monday of every month_
 
