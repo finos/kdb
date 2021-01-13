@@ -1,4 +1,14 @@
-.finos.conn.priv.connections:([name:`$()]lazy:`boolean$();fd:`int$();addresses:();timeout:`long$();ccb:();dcb:();rcb:();ecb:();timerId:`int$());
+.finos.conn.priv.connections:([name:`$()]
+    lazy:`boolean$();   //lazy connection not established immediately, only when attempting to send on it
+    lazyRetryTime:`time$(); //time until the connection is tried again after a failure on lazy connections
+    fd:`int$();         //file descriptor
+    addresses:();       //list of destination addresses
+    timeout:`long$();   //timeout when opening the connection
+    ccb:();             //connect callback
+    dcb:();             //disconnect callback
+    rcb:();             //registration callback
+    ecb:();             //error callback
+    timerId:`int$());   //reconnection timer
 .finos.conn.priv.defaultConnRow:`fd`lazy`ccb`dcb`rcb`ecb`timerId!(0N;0b;(::);(::);(::);(::);0N);
 
 ///
@@ -6,11 +16,12 @@
 .finos.conn.defaultOpenConnTimeout:300000;  //5 minutes
 .finos.conn.priv.initialBackoff:500;
 .finos.conn.priv.maxBackoff:30000;
+.finos.conn.defaultLazyRetryTime:00:10:00t;
 
 ///
 // Logging function.
 // To replace with finos logging utils?
-.finos.conn.log:{-1 string[.z.P]," .finos.init ",x};
+.finos.conn.log:{-1 string[.z.P]," .finos.conn ",x};
 
 ///
 // Error trapping function for opening connections and invoking callbacks.
@@ -35,6 +46,7 @@
     //set defaults
     connection:.finos.conn.priv.defaultConnRow,options,`name`addresses!(name;addresses);
     if[not `timeout in key connection; connection[`timeout]:.finos.conn.defaultOpenConnTimeout];
+    if[not `lazyRetryTime in key connection; connection[`lazyRetryTime]:.finos.conn.defaultLazyRetryTime];
     //Argument validation
     if[-11h<>type connection`name;
       '"Invalid name type"];
@@ -46,6 +58,8 @@
     if[0<count extraCols;
         '"unknown options: ",","sv string extraCols;
     ];
+    if[not -7h=type connection`timeout; connection[`timeout]:`int$`time$connection`timeout];
+    if[not -19h=type connection`lazyRetryTime; connection[`lazyRetryTime]:`time$connection`lazyRetryTime];
     `.finos.conn.priv.connections upsert connection;
 
     if[not connection`lazy;
@@ -137,8 +151,7 @@
 // @return A list of actual connection strings that can be passed to hopen.
 .finos.conn.resolveAddress:enlist;
 
-.finos.conn.priv.lazyRetryTime:00:10:00;
-.finos.conn.priv.lazyConnBlacklist:([addr:()]; lastErrorTime:`timestamp$());
+.finos.conn.priv.lazyConnCooldownList:([addr:()]; lastErrorTime:`timestamp$());
 
 .finos.conn.priv.attemptConnection:{[connName]
     hostports:.finos.conn.priv.connections[connName;`addresses];
@@ -154,10 +167,12 @@
         hostport:hostports i;
         cont:1b;
         resolvedHostports:();
-        if[any hostport~/:exec addr from .finos.conn.priv.lazyConnBlacklist;
-            $[.z.P>.finos.conn.priv.lazyConnBlacklist[hostport;`lastErrorTime]+.finos.conn.priv.lazyRetryTime;
-                delete from .finos.conn.priv.lazyConnBlacklist where addr~\:hostport;
-                cont:0b
+        if[any hostport~/:exec addr from .finos.conn.priv.lazyConnCooldownList;
+            $[.z.P>rt:.finos.conn.priv.lazyConnCooldownList[hostport;`lastErrorTime]+conn`lazyRetryTime;
+                delete from `.finos.conn.priv.lazyConnCooldownList where addr~\:hostport;
+                [cont:0b;
+                    .finos.conn.log"Address ",hostport," is not retried for ",string`time$rt-.z.P
+                ]
             ];
         ];
         if[cont;
@@ -166,7 +181,7 @@
         while[(null fd) and 0<count resolvedHostports;
             resolvedHostport:first resolvedHostports;
             resolvedHostports:1_resolvedHostports;
-            if[not null fd:.finos.conn.errorTrapAt[hopen;resolvedHostport;'[{0Ni};]ecb[connName;hostport;]];
+            if[not null fd:.finos.conn.errorTrapAt[hopen;(resolvedHostport;conn`timeout);'[{0Ni};]ecb[connName;hostport;]];
                 resolvedHostports:();
                 .finos.conn.log"Connection ",string[connName]," connected to ",hostport;
                 .finos.conn.priv.connections[connName;`fd]:fd;
@@ -185,9 +200,9 @@
                 ];
             ];
         ];
-        if[(null fd) and .finos.conn.priv.connections[connName;`lazy];
-            .finos.conn.log"Blacklisting address ",hostport," for ",string[.finos.conn.priv.lazyRetryTime];
-            `.finos.conn.priv.lazyConnBlacklist upsert enlist`addr`lastErrorTime!(hostport;.z.P);
+        if[(null fd) and .finos.conn.priv.connections[connName;`lazy] and not hostport in enlist[()],exec addr from .finos.conn.priv.lazyConnCooldownList;
+            .finos.conn.log"Not retrying address ",hostport," for ",string[conn`lazyRetryTime];
+            `.finos.conn.priv.lazyConnCooldownList upsert enlist`addr`lastErrorTime!(hostport;.z.P);
         ];
         i+:1;
     ];
