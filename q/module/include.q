@@ -1,5 +1,3 @@
-.finos.dep.pathSeparator:$[.z.o like "w*";"\\";"/"];
-
 .finos.dep.simplifyPath:{[path]
     path:ssr[path;"/";.finos.dep.pathSeparator];
     path:.finos.dep.pathSeparator vs "",path;    //ensure it's a string
@@ -45,15 +43,15 @@
 .finos.dep.priv.stat:([file:()]elapsedTime:`timespan$());
 
 .finos.dep.resolvePathTo:{[dir;file]
-    .finos.dep.simplifyPath$[.finos.dep.isAbsolute file;file;dir,.finos.dep.pathSeparator,file]};
+    .finos.dep.simplifyPath$[.finos.dep.isAbsolute file;file;.finos.dep.joinPath(dir;file)]};
 
 .finos.dep.resolvePath:{[file]
-    .finos.dep.resolvePathTo[$[0=count .finos.dep.dir;.finos.dep.root;.finos.dep.dir];file]};
+    .finos.dep.resolvePathTo[.finos.dep.cutPath[.finos.dep.currentFile[]][0];file]};
 
 //set to false to see where the loaded scripts break
 //however this will corrupt the include stack, so don't use include again after an error
 .finos.dep.handleErrors:1b;
-if[0<count getenv`finos_ml_disable_include_errors; .finos.dep.handleErrors:0b];
+if[0<count getenv`finos_dep_disable_include_errors; .finos.dep.handleErrors:0b];
 
 .finos.dep.priv.errorHandler:{[olddir;path;x]
     .finos.dep.dir:olddir;
