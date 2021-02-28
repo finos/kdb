@@ -53,7 +53,6 @@
 .finos.dep.loadScript:{[script]
     if[()~.finos.dep.currentModule; '".finos.dep.loadScript must be used in module.q"];
     .finos.dep.loadScriptIn[.finos.dep.currentModule 0;script]};
-    };
 
 .finos.dep.libPathIn:{[moduleName;lib]
     if[not moduleName in key .finos.dep.list; '"module not registered: ",moduleName];
