@@ -17,24 +17,15 @@
 .finos.util.trp:{[fun;params;errorHandler] -105!(fun;params;errorHandler)};
 .finos.util.try2:{[fun;params;errorHandler] .finos.util.trp[fun;params;{[errorHandler;e;t] -2"Error: ",e," Backtrace:\n",.Q.sbt t; errorHandler[e]}[errorHandler]]};
 
-.finos.dep.logfn:-1;
+if[()~key `.finos.dep.logfn; .finos.dep.logfn:-1];
 .finos.dep.errorlogfn:-2;
 .finos.dep.safeevalfn:.finos.util.try2;
-
-//kx bug as of 3.6 2019.06.20: ` vs doesn't handle \ separated paths properly
-.finos.dep.splitPath:$[.z.o like "w*";
-    {`$ssr[;"/";"\\"]each string` vs`$ssr[string x;"\\";"/"]};
-    ` vs];
 
 .finos.dep.isAbsolute:$[.z.o like "w*";
     {x like "?:*"};
     {x like "/*"}];
 
 .finos.dep.startupDir:system"cd";
-.finos.dep.root:.finos.dep.simplifyPath $[.finos.dep.isAbsolute .z.f;
-    1_string first .finos.dep.splitPath hsym .z.f;
-    (system "cd"),{$[(x~`:.) or null x; ""; .finos.dep.pathSeparator,1_string x]}first .finos.dep.splitPath hsym .z.f];
-.finos.dep.dir:"";
 .finos.dep.loaded^:(enlist .finos.dep.simplifyPath$[.finos.dep.isAbsolute .z.f;string .z.f;(system "cd"),.finos.dep.pathSeparator,string .z.f])!enlist 1b;
 .finos.dep.includeStack:1#key .finos.dep.loaded;
 .finos.dep.includeDeps:([]depFrom:();depTo:());
@@ -46,15 +37,16 @@
     .finos.dep.simplifyPath$[.finos.dep.isAbsolute file;file;.finos.dep.joinPath(dir;file)]};
 
 .finos.dep.resolvePath:{[file]
-    .finos.dep.resolvePathTo[.finos.dep.cutPath[.finos.dep.currentFile[]][0];file]};
+    currFile:.finos.dep.currentFile[];
+    path:$[(::)~currFile; system"cd"; .finos.dep.cutPath[currFile][0]];
+    .finos.dep.resolvePathTo[path;file]};
 
 //set to false to see where the loaded scripts break
 //however this will corrupt the include stack, so don't use include again after an error
 .finos.dep.handleErrors:1b;
-if[0<count getenv`finos_dep_disable_include_errors; .finos.dep.handleErrors:0b];
+if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.handleErrors:0b];
 
-.finos.dep.priv.errorHandler:{[olddir;path;x]
-    .finos.dep.dir:olddir;
+.finos.dep.priv.errorHandler:{[path;x]
     .finos.dep.loaded[path]:0b;
     .finos.dep.includeStack:(count[.finos.dep.includeStack]-1)#.finos.dep.includeStack;
     .finos.dep.errorlogfn["Error while loading ",path,": ",x];
@@ -68,10 +60,6 @@ if[0<count getenv`finos_dep_disable_include_errors; .finos.dep.handleErrors:0b];
 // @param file File to include
 .finos.dep.includeEx:{[force;file]
     if[0=count file; '"include: empty path"];
-    olddir:.finos.dep.dir;
-    if[0=count .finos.dep.dir;
-        .finos.dep.dir:.finos.dep.root;
-    ];
     path:.finos.dep.resolvePath file;
     $[()~kp:key hsym`$path;
         {'`$x}path," doesn't exist";
@@ -87,19 +75,17 @@ if[0<count getenv`finos_dep_disable_include_errors; .finos.dep.handleErrors:0b];
     if[force or not .finos.dep.loaded[path];
         `.finos.dep.priv.callTree insert (`callFrom`callTo!(last .finos.dep.includeStack;path));
         .finos.dep.loaded[path]:1b;
-        .finos.dep.dir:1_string first .finos.dep.splitPath hsym `$path;
         .finos.dep.logfn ((count[.finos.dep.includeStack]-1)#" "),"include: loading file ",path;
         .finos.dep.includeStack:.finos.dep.includeStack,enlist path;
         start:.z.P;
         $[.finos.dep.handleErrors;
-            .finos.dep.safeevalfn[system;enlist"l ",path;.finos.dep.priv.errorHandler[olddir;path]];
+            .finos.dep.safeevalfn[system;enlist"l ",path;.finos.dep.priv.errorHandler[path]];
             system"l ",path
         ];
         end:.z.P;
         .finos.dep.priv.stat[([]file:enlist path);`elapsedTime]:end-start;
         .finos.dep.includeStack:(count[.finos.dep.includeStack]-1)#.finos.dep.includeStack;
     ];
-    .finos.dep.dir:olddir;
     };
 
 .finos.dep.include:.finos.dep.includeEx[0b;];
