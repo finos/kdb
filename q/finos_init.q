@@ -25,5 +25,9 @@
     paths:"",/:paths;
     .finos.dep.pathSeparator sv paths};
 
-system"l ",.finos.dep.joinPath(.finos.dep.cutPath[.finos.dep.currentFile[]][0];"module";"include.q");
-.finos.dep.include"module/dep.q";
+{
+    path:.finos.dep.cutPath[.finos.dep.currentFile[]][0];
+    system"l ",.finos.dep.joinPath(path;"module";"include.q");
+    .finos.dep.include"module/dep.q";
+    .finos.dep.regModule["finos/kdb";"1.0";path;"";""];
+    }[];
