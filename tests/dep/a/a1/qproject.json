@@ -1,0 +1,5 @@
+{
+    "dependencies": [
+        {"name": "a/a2", "version": "1.0", "resolver":"test"}
+    ]
+}

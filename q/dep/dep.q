@@ -11,8 +11,11 @@
     if[0=count version; '"version must not be empty"];
     if[all 0=count each (projectRoot;scriptPath;libPath); '"at least one of projectRoot, scriptPath or libPath must be provided"];
     if[not .finos.dep.isAbsolute projectRoot; projectRoot:.finos.dep.resolvePathTo[system"cd";projectRoot]];
+    if[()~key `$":",projectRoot; '"project root does not exist: ",projectRoot];
     if[not .finos.dep.isAbsolute scriptPath; scriptPath:.finos.dep.resolvePathTo[projectRoot;scriptPath]];
+    if[()~key `$":",scriptPath; '"script path does not exist: ",scriptPath];
     if[not .finos.dep.isAbsolute libPath; libPath:.finos.dep.resolvePathTo[projectRoot;libPath]];
+    if[()~key `$":",libPath; '"library path does not exist: ",libPath];
     if[first enlist[moduleName] in exec moduleName from .finos.dep.list;
         existing:.finos.dep.list moduleName;
         prevOverride:existing`isOverride;
@@ -65,6 +68,9 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.try:{[x;y;z]x . y}];
     if[not moduleName in key .finos.dep.list; '"module not registered: ",moduleName];
     if[.finos.dep.list[moduleName;`loaded]; :(::)];
     .finos.dep.preLoadModuleCallback[moduleName];
+    if[`qproject.json in key `$":",.finos.dep.list[moduleName;`projectRoot];
+        .finos.dep.loadDependencies `$":",.finos.dep.joinPath(.finos.dep.list[moduleName;`projectRoot];"qproject.json");
+    ];
     scriptPath:.finos.dep.list[moduleName;`scriptPath];
     if[`module.q in key `$":",scriptPath;
         .finos.dep.include .finos.dep.joinPath(scriptPath;"module.q");
@@ -81,7 +87,7 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.try:{[x;y;z]x . y}];
 
 .finos.dep.scriptPath:{[script]
     if[()~.finos.dep.currentModule; '".finos.dep.scriptPath must be used in module.q"];
-    .finos.dep.scriptPathIn[.finos.dep.currentModule 0;script]};
+    .finos.dep.scriptPathIn[.finos.dep.currentModule;script]};
 
 .finos.dep.loadScriptIn:{[moduleName;script]
     if[not moduleName in key .finos.dep.list; '"module not registered: ",moduleName];
@@ -90,7 +96,7 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.try:{[x;y;z]x . y}];
 
 .finos.dep.loadScript:{[script]
     if[()~.finos.dep.currentModule; '".finos.dep.loadScript must be used in module.q"];
-    .finos.dep.loadScriptIn[.finos.dep.currentModule 0;script]};
+    .finos.dep.loadScriptIn[.finos.dep.currentModule;script]};
 
 .finos.dep.execScriptIn:{[moduleName;script]
     if[not moduleName in key .finos.dep.list; '"module not registered: ",moduleName];
@@ -99,7 +105,7 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.try:{[x;y;z]x . y}];
 
 .finos.dep.execScript:{[script]
     if[()~.finos.dep.currentModule; '".finos.dep.loadScript must be used in module.q"];
-    .finos.dep.execScriptIn[.finos.dep.currentModule 0;script]};
+    .finos.dep.execScriptIn[.finos.dep.currentModule;script]};
 
 .finos.dep.libPathIn:{[moduleName;lib]
     if[not moduleName in key .finos.dep.list; '"module not registered: ",moduleName];
@@ -110,7 +116,7 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.try:{[x;y;z]x . y}];
 
 .finos.dep.libPath:{[lib]
     if[()~.finos.dep.currentModule; '".finos.dep.libPath must be used in module.q"];
-    .finos.dep.libPathIn[.finos.dep.currentModule 0;lib]};
+    .finos.dep.libPathIn[.finos.dep.currentModule;lib]};
 
 .finos.dep.loadFuncIn:{[moduleName;lib;funcName;arity]
     if[not moduleName in key .finos.dep.list; '"module not registered: ",moduleName];
@@ -119,13 +125,13 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.try:{[x;y;z]x . y}];
 
 .finos.dep.loadFunc:{[lib;funcName;arity]
     if[()~.finos.dep.currentModule; '".finos.dep.loadFunc must be used in module.q"];
-    .finos.dep.loadFuncIn[.finos.dep.currentModule 0;lib;funcName;arity]};
+    .finos.dep.loadFuncIn[.finos.dep.currentModule;lib;funcName;arity]};
 
-.finos.dep.loadDependencies:{[deps]
-    if[-11h=type deps; deps:"\n"sv read0 deps];
-    depsk:.j.k deps;
-    if[not `dependencies in key depsk; '"no 'dependencies' element found"];
-    .finos.dep.loadFromRecord each depsk`dependencies;
+.finos.dep.loadDependencies:{[projectFile]
+    if[-11h=type projectFile; projectFile:"\n"sv read0 projectFile];
+    projectFileK:.j.k projectFile;
+    if[not `dependencies in key projectFileK; :(::)];
+    .finos.dep.loadFromRecord each projectFileK`dependencies;
     };
 
 if[()~key `.finos.dep.resolvers; .finos.dep.resolvers:(`$())!()];
@@ -133,7 +139,7 @@ if[()~key `.finos.dep.resolvers; .finos.dep.resolvers:(`$())!()];
 .finos.dep.resolvers[`]:{`projectRoot`scriptPath`libPath#x};
 
 .finos.dep.loadFromRecord:{[rec]
-    resolver:$[`resolver in key rec; rec`resolver; `];
+    resolver:$[`resolver in key rec; `$rec`resolver; `];
     if[not resolver in key .finos.dep.resolvers; '"unregistered resolver: ",.Q.s1 resolver];
     params:.finos.dep.resolvers[resolver][rec];
     override:0b;
