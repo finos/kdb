@@ -5,7 +5,9 @@
     bt:(.Q.btx .Q.Ll`)[;1;3];
     l:first where bt like"\\l *";
     $[null l;
-        (::);
+        string .z.f;    //this is needed to ensure any includes in the main script work properly
+                        //unfortunately this also cause the function to misbehave if called outside of a file load
+        //(::);
         3_bt l]};
 
 .finos.dep.pathSeparators:$[.z.o like "w*";"\\";"/"];
@@ -27,7 +29,7 @@
 
 {
     path:.finos.dep.cutPath[.finos.dep.currentFile[]][0];
-    system"l ",.finos.dep.joinPath(path;"module";"include.q");
-    .finos.dep.include"module/dep.q";
+    system"l ",.finos.dep.joinPath(path;"dep";"include.q");
+    .finos.dep.include"dep/dep.q";
     .finos.dep.regModule["finos/kdb";"1.0";path;"";""];
     }[];

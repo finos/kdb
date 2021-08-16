@@ -1,0 +1,6 @@
+#!/bin/bash -eu
+#example: rlwrap tests/dep/test.bsh test1.q
+cd `dirname $0`
+ROOTDIR=`cd ../..;pwd`
+export QINIT=$ROOTDIR/q/finos_init.q
+q $1
