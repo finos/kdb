@@ -139,12 +139,20 @@ if[()~key `.finos.dep.resolvers; .finos.dep.resolvers:(`$())!()];
 .finos.dep.resolvers[`]:{`projectRoot`scriptPath`libPath#x};
 
 .finos.dep.loadFromRecord:{[rec]
-    resolver:$[`resolver in key rec; `$rec`resolver; `];
-    if[not resolver in key .finos.dep.resolvers; '"unregistered resolver: ",.Q.s1 resolver];
-    params:.finos.dep.resolvers[resolver][rec];
+    if[not `name in key rec; '"name missing from record"];
     override:0b;
+    prevOverride:0b;
     if[`override in key rec; if[rec`override; override:1b]];
-    .finos.dep.priv.regModule[rec`name;rec`version;params`projectRoot;params`scriptPath;params`libPath;override];
+    if[rec[`name] in exec moduleName from .finos.dep.list;
+        prevOverride:.finos.dep.list[rec`name;`isOverride];
+    ];
+    if[override or not prevOverride;
+        resolver:$[`resolver in key rec; rec`resolver; `];
+        if[10h=type resolver; resolver:`$resolver];
+        if[not resolver in key .finos.dep.resolvers; '"unregistered resolver: ",.Q.s1 resolver];
+        params:.finos.dep.resolvers[resolver][rec];
+        .finos.dep.priv.regModule[rec`name;rec`version;params`projectRoot;params`scriptPath;params`libPath;override];
+    ];
     if[override; :(::)];
     if[`lazy in key rec;if[rec`lazy;
         if[`scripts in key rec; '"lazy modules cannot have scripts specified"];
