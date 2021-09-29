@@ -10,7 +10,7 @@ assignees: ''
 ## Date
 Monday, Month DD, YYYY - 9:30am EST / 2:30pm BST
 
-_// First Monday of every month_
+_// Second Monday of every month_
 
 ## Attendees
 | Fullname | Affiliation | GitHub Username |
@@ -48,12 +48,12 @@ _// First Monday of every month_
 
 ### WebEx info
 **Webex** 
-* https://finos.webex.com/finos/j.php?MTID=mfc9190e818fd85f9e3ece5166f23d920
+* https://finos.webex.com/finos/j.php?MTID=me61719ca3c3295a7cc76762d78392bc3
 
 **Dial-in and Project Materials**
 - **US:** +1-415-655-0003 US Toll
 - **UK:** +44-20319-88141 UK Toll
-- **Access code:** 663 746 304
+- **Access code:** 2704 417 0390
 - **GitHub Repos:** 
   - https://github.com/finos/kdb
   - https://github.com/finos/kdb-studio
