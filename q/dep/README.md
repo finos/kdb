@@ -11,13 +11,12 @@ A module is described using a name, version, project root, script path and libra
 
 ### High-level API
 * ```.finos.dep.loadFromRecord[rec]``` registers and optionally loads a module. It accepts a dictionary with the following keys:
-** ```name``` (string, mandatory): the name of the module
-** ```version``` (string, mandatory): the version of the module
-** ```resolver``` (symbol): the name of the resolver to use, see below
-** ```override``` (boolean): whether this is an override or not
-** ```lazy``` (boolean): if true, only register the module, don't load it
-** ```scripts``` (list of string): a list of scripts to load from the module, only allowed if ```lazy``` is false
-* 
+  * ```name``` (string, mandatory): the name of the module
+  * ```version``` (string, mandatory): the version of the module
+  * ```resolver``` (symbol): the name of the resolver to use, see below
+  * ```override``` (boolean): whether this is an override or not
+  * ```lazy``` (boolean): if true, only register the module, don't load it
+  * ```scripts``` (list of string): a list of scripts to load from the module, only allowed if ```lazy``` is false
 
 ### Resolvers
 Resolvers can be used to construct the projectRoot, scriptPath and libPath for a module. The default resolver (whose name is the null symbol) simply picks out the ```projectRoot```, ```scriptPath``` and ```libPath``` elements of the record, so when using this resolver, these are mandatory as well. To define custom resolvers, assign them in the dictionary ```.finos.dep.resolvers```. The resolver must be a function that takes a dictionary (the same one that is used as the parameter to ```.finos.dep.loadFromRecord```) and must return a dictionary with the keys ```projectRoot```, ```scriptPath``` and ```libPath```, with all three values being strings.
