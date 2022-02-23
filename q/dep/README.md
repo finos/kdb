@@ -42,7 +42,7 @@ If a file named ```qproject.json``` is found in the project root, it is processe
 
 ### include
 The include feature of FINOS Module Loader allows intra-project file dependency management. This is the underlying function used by all the script loading in the dep library, with the exception of ```.finos.dep.execScript(In)```.
-The core of this feature is the ```.finos.dep.include``` function which takes a string as a parameter and loads the specified file. Relative paths are considered to be relative to either the startup script or the file being loaded by the innermost include call - in other words, if you only use include to load your files, you can assume that relative paths are relative to the current file.
+The core of this feature is the ```.finos.dep.include``` function which takes a string as a parameter and loads the specified file. Relative paths are considered to be relative to either the startup script or the file being loaded by the innermost include call - in other words, if you only use include to load your files, you can assume that relative paths are relative to the current file. **In KDB 3.5/3.6, relative paths should only be used in the top-level script or a script itself being directly loaded by ```.finos.dep.include```.**
 The include function does deduplication - it won't load a file that has already been loaded.
 Circular includes will cause an exception.
 The most important points when using include with relative paths:
