@@ -54,8 +54,8 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.handleErrors:0b];
 
 ///
 // Include the specified file. Path is relative to the initial script (.z.f) or the current file if it's being included. Files won't be included more than once.
-// This function should be used only outside of functions, and only in top-level scripts or in scripts included using this function.
-// It should not be used from scripts loaded using \l or wrappers around it.
+// For relative paths, this function should be used only outside of functions, and only in top-level scripts or in scripts included using this function.
+// On 3.6 and below, it should not be used from scripts loaded directly using \l or wrappers around it.
 // @param force If true, load this file even if already loaded
 // @param file File to include
 .finos.dep.includeEx:{[force;file]
@@ -77,12 +77,19 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.handleErrors:0b];
         .finos.dep.loaded[path]:1b;
         .finos.dep.logfn ((count[.finos.dep.includeStack]-1)#" "),"include: loading file ",path;
         .finos.dep.includeStack:.finos.dep.includeStack,enlist path;
+        if[.z.K<4.0;
+            prevFile:.finos.dep.priv.currentFile;
+            .finos.dep.priv.currentFile:path;   //used by .finos.dep.currentFile
+        ];
         start:.z.P;
         $[.finos.dep.handleErrors;
             .finos.dep.safeevalfn[system;enlist"l ",path;.finos.dep.priv.errorHandler[path]];
             system"l ",path
         ];
         end:.z.P;
+        if[.z.K<4.0;
+            .finos.dep.priv.currentFile:prevFile;
+        ];
         .finos.dep.priv.stat[([]file:enlist path);`elapsedTime]:end-start;
         .finos.dep.includeStack:(count[.finos.dep.includeStack]-1)#.finos.dep.includeStack;
     ];
