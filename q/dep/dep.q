@@ -47,7 +47,7 @@ if[0<count getenv`FINOS_DEPENDS_DEBUG; .finos.dep.try:{[x;y;z]x . y}];
 
 .finos.dep.loadModule:{[moduleName]
     if[first enlist[moduleName] in .finos.dep.priv.moduleStack;
-        '"circular module load: "," -> " sv .finos.dep.priv.moduleStack,enlist moduleName;
+        {'x}"circular module load: "," -> " sv .finos.dep.priv.moduleStack,enlist moduleName;
     ];
     prevModule:.finos.dep.currentModule;
     .finos.dep.currentModule:moduleName;

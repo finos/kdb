@@ -1,8 +1,10 @@
 .finos.dep.simplifyPath:{[path]
+    path0:path;
     path:ssr[path;"/";.finos.dep.pathSeparator];
     path:.finos.dep.pathSeparator vs "",path;    //ensure it's a string
     path:path where not(enlist ".")~/:path; //remove "." elements
-    path:(1#path),(1_path) except enlist""; //remove blank elements (e.g. from dir//file)
+    c:1+$[.z.o like "w*";path0 like "\\\\*";0];
+    path:(c#path),(c _path) except enlist""; //remove blank elements (e.g. from dir//file)
     path:{                  //iteratively remove "dir/.." parts from path
         if[not ".." in x;:x];
         pos:(first where x~\:"..");
@@ -22,7 +24,7 @@ if[()~key `.finos.dep.logfn; .finos.dep.logfn:-1];
 .finos.dep.safeevalfn:.finos.util.try2;
 
 .finos.dep.isAbsolute:$[.z.o like "w*";
-    {x like "?:*"};
+    {any x like/:("?:*";"\\*";"/*")};
     {x like "/*"}];
 
 .finos.dep.startupDir:system"cd";
