@@ -39,10 +39,13 @@ if[not `timers in key `.finos.timer.priv;
 
     //Pass timer to the callback so it can use the ctx`id to remove itself if desired.
     //ctx`when can be used for the callback to know when it was supposed to be called so it can figure out if it's delayed.
+    startTime:.z.P;
    .finos.timer.safeevalfn[ctx`func;enlist ctx;.finos.timer.timerErrorHandler[ctx;]];
+    endTime:.z.P;
 
     //timer could have changed in the callback
     /ctx:exec from .finos.timer.priv.timers where id=ctx`id;
+    .finos.timer.recordRunTime[ctx`id; endTime-startTime];
 
     if[null ctx`id;
         :(::)];
@@ -66,39 +69,45 @@ if[not `timers in key `.finos.timer.priv;
     .finos.timer.priv.timers[ctx`id;`when]:when;
     };
 
+//can be overridden by user to record statistics about timers
+.finos.timer.recordRunTime:{[tid;elapsed]};
+
 .finos.timer.priv.ONEDAYMILLIS:`int$24:00:00.000
 //reset \t value for next timer, or zero if there aren't any
 .finos.timer.priv.setSystemT:{
     //only set timeout to zero if there are no more timers
     //Use ONEDAYMILLIS as max for timer to ensure int max not reached
     //.z.ts will wake up, have nothing to do and reset
-    system "t ",string
-      $[count when:asc exec when from .finos.timer.priv.timers;
-        min(.finos.timer.priv.ONEDAYMILLIS;max(1;`int$`time$first[when]-.z.P));
-        0];}
+    newVal:$[count when:asc exec when from .finos.timer.priv.timers;
+        min(.finos.timer.priv.ONEDAYMILLIS;max(1;`int$`time$(first[when]|.z.P)-.z.P));
+        0];
+    system "t ",string newVal;
+    };
 
 //check callback symbol points to a function
 .finos.timer.priv.validateCallback:{[callback]
     if[-11h=type callback;
          callback:get callback];
     if[not(type callback) in 100 104h;
-     '`$"timer requires a func or projection."]}
+     '"timer requires a function or projection"]}
 
 .finos.timer.priv.wrapCallbackByName: {[f]
     .finos.timer.priv.validateCallback[f];
     $[-11h=type f;@[;]f;f]}
 
 //replace callback function
-.finos.timer.replaceCallback:{[timerId;function]
-    if[not type[timerId] in -6 -7h; '`$"Expecting a integer id in .finos.timer.replaceCallback."];
-    if[not timerId in exec id from .finos.timer.priv.timers; '`$"invalid timer ID"];
-    .finos.timer.priv.timers[timerId;`func]:.finos.timer.priv.wrapCallbackByName function;
+.finos.timer.replaceCallback:{[tid;func]
+    if[not type[tid] in -6 -7h; '"Expecting a integer id in .finos.timer.replaceCallback."];
+    if[not tid in exec id from .finos.timer.priv.timers; '"invalid timer ID"];
+    .finos.timer.priv.validateCallback[func];
+    .finos.timer.priv.timers[tid;`func]:.finos.timer.priv.wrapCallbackByName func;
     };
 
 //insert a new timer
 .finos.timer.priv.addTimer:{[func;when;period]
     if[not null when; when:.finos.timer.priv.toTimestamp when];
     if[not null period; period:.finos.timer.priv.toTimespan period];
+    .finos.timer.priv.validateCallback[func];
     id:.finos.timer.priv.idcount+1;
     if[not .finos.timer.defaultCatchUpMode in .finos.timer.priv.validCatchUpModes;
         '`$".finos.timer.defaultCatchUpMode has invalid value ",.Q.s1[.finos.timer.defaultCatchUpMode],", should be one of ",.Q.s1 .finos.timer.priv.validCatchUpModes;
@@ -182,7 +191,7 @@ if[not `timers in key `.finos.timer.priv;
 // Remove a previously added timer.
 // @param tid Timer handle returned by one of the addXXTimer functions.
 .finos.timer.removeTimer:{[tid]
-    if[not type[tid] in -6 -7h; '`$"Expecting an integer id"];
+    if[not type[tid] in -6 -7h; '"Expecting an integer id"];
     delete from `.finos.timer.priv.timers where id=tid;
     };
 
@@ -190,8 +199,8 @@ if[not `timers in key `.finos.timer.priv;
 // @param tid Timer handle returned by one of the addXXTimer functions.
 // @param period The new timer period (time or timespan)
 .finos.timer.adjustPeriodicFrequency:{[tid;newperiod]
-    if[not type[tid] in -6 -7h; '`$"Expecting an integer id"];
-    if[not tid in exec id from .finos.timer.priv.timers; '`$"invalid timer ID"];
+    if[not type[tid] in -6 -7h; '"Expecting an integer id"];
+    if[not tid in exec id from .finos.timer.priv.timers; '"invalid timer ID"];
     .finos.timer.priv.timers[tid;`period]:.finos.timer.priv.toTimespan newperiod;
     };
 
@@ -199,12 +208,15 @@ if[not `timers in key `.finos.timer.priv;
 // @param tid Timer handle returned by one of the addXXTimer functions.
 // @param mode One of the valid values for [[.finos.timer.defaultCatchUpMode]].
 .finos.timer.setCatchUpMode:{[tid;mode]
-    if[not type[tid] in -6 -7h; '`$"Expecting an integer id"];
-    if[not type[mode]=-11h; '`$"Expecting a symbol mode"];
+    if[not type[tid] in -6 -7h; '"Expecting an integer id"];
+    if[not type[mode]=-11h; '"Expecting a symbol mode"];
     if[not mode in .finos.timer.priv.validCatchUpModes; '`$"mode must be one of ",.Q.s1 .finos.timer.priv.validCatchUpModes];
-    if[not tid in exec id from .finos.timer.priv.timers; '`$"invalid timer ID"];
+    if[not tid in exec id from .finos.timer.priv.timers; '"invalid timer ID"];
     .finos.timer.priv.timers[tid;`catchUpMode]:mode;
     };
+
+// Get the table of all timers.
+.finos.timer.list:{.finos.timer.priv.timers};
 
 {   //the "main" function
     restoreOld:0b;

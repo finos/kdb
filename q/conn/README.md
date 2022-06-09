@@ -11,7 +11,7 @@ This is a wrapper around the standard hopen/hclose methods. It provides a number
 
 Client side API
 ===============
-* `.finos.conn.open[name;address;options]`  
+* `.finos.conn.open[name;address;options]`
    Opens a remote connection. It does NOT return a handle. Instead it associates the given name with the given address. Later the name can be used to send data through the connection. For non-lazy connections, it will then schedule a timer that opens the connection. If the connection fails, it is retried with exponential backoff. The same retry logic is also triggered whenever the connection is closed.
    The address may be a string, symbol, or a list of either. When a list is used, the addresses are tried in the specified order until connection succeeds (this is useful for failover).
    Options is a dictionary that may have the following elements:
