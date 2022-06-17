@@ -13,3 +13,32 @@ q).finos.timer.addRelativeTimer[{0N!"C",string .z.T;}; 6000]
 q).finos.timer.addAbsoluteTimer[{0N!"D",string .z.T;}; .z.T+7500]
 q).finos.timer.removeTimer tid
 ```
+
+API
+===
+`func` can be a function or a symbol.
+`when` can be a temporal type indicating a point in time (timestamp is recommended). If there is no date component, it refers to today.
+`period` is a temporal type indicating a period (timespan is recommended).
+The _add_ functions return a timer ID that can then be used to manipulate the timer.
+
+* `.finos.timer.addAbsoluteTimer[func;when]`: Run `func` at `when`.
+* `.finos.timer.addAbsoluteTimerFuture[func;when]`: Run `func` at `when`, but only if it's in the future.
+* `.finos.timer.addRelativeTimer[func;delay]`: Run `func` after `delay`.
+* `.finos.timer.addPeriodicTimer[func;period]` Run `func` every `period` (first run is after `period` is elapsed once).
+* `.finos.timer.addPeriodicTimerWithStartTime[func;when;period]`: Run `func` at `when` and then every `period` afterwards.
+* `.finos.timer.addTimeOfDayTimer[func;startTime;period]`: Run `func` at `startTime` (must be a time or timespan) and then every `period` afterwards. `startTime` is today, unless that would put it in the past, in which case it's tomorrow. Most useful for setting a daily timer that should run at a certain time of day.
+* `.finos.timer.removeTimer[tid]`: Remove a timer.
+* `.finos.timer.adjustPeriodicFrequency[tid;newperiod]`: Change the `period` of a timer. This can turn a pending one-shot timer into a periodic one, and vice versa by setting the period to null.
+* `.finos.timer.replaceCallback[tid;function]`: Replaces the callback function for a timer.
+* `.finos.timer.setCatchUpMode[tid;mode]`: Sets the catch up mode for a timer. The default value can be set via the variable `.finos.timer.defaultCatchUpMode`. The mode has the following possible values:
+  * ``` `none```: ignore the missed invocation - timer will run at the next occurrence
+  * ``` `once```: trigger missed invocations but multiple missed invocations are only triggered once
+  * ``` `all```: trigger all missed invocations - should only be used if the slowness is temporary and further invocations can indeed catch up
+* `.finos.timer.list[]`: Get the list of all timers.
+
+The timer is invoked with a dictionary containing the following fields:
+* `id`: timer ID (int)
+* `when`: scheduled time (timestamp)
+* `func`: the function itself as it was registerd
+* `period`: the timer period (timespan)
+* `catchUpMode`: see `.finos.timer.setCatchUpMode` above (symbol)
