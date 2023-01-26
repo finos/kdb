@@ -472,11 +472,11 @@
 // @param y sym
 // @return character vector
 .finos.unzip.priv.unzip_system:{
-    f:hsym`$first system"mktemp";
-    system"(unzip -p \"",(1_string x),"\" \"",(string y),"\" >",(1_string f),")";
-    r:"c"$read1 f;
-    hdel f;
-    r}
+  f:hsym`$first system"mktemp";
+  system"(unzip -p \"",(1_string x),"\" \"",(string y),"\" >",(1_string f),")";
+  r:"c"$read1 f;
+  hdel f;
+  r}
 
 // Perform various zip-related operations.
 // Possible values for x, and expected z arg in each case:
