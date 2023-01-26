@@ -4,9 +4,9 @@
 // Utilities
 
 // Split a subsection of data into fields.
-// Starts from offset and takes sum fields entries, splitting them according
+// Starts from offset and takes sum fields entries, splitting them according.
 //  to fields.
-// fields is a dictionary of field names and widths
+// fields is a dictionary of field names and widths.
 // @param x fields
 // @param y offset
 // @param z data
@@ -30,13 +30,13 @@
 
 // Parse a range of data with a header.
 // parser is a function of three arguments:
-//  its first argument will be (data;extra); extra is passed as :: if not
-//   included
-//  its second argument will be the starting index of the record to extract
-//  its third argument will be the raw headers of the record, split and
-//   labeled according to fields
-//  it should return (record;next index)
-// parser will be called until it returns next index equal to length
+//  Its first argument will be (data;extra); extra is passed as :: if not
+//   included.
+//  Its second argument will be the starting index of the record to extract.
+//  Its third argument will be the raw headers of the record, split and
+//   labeled according to fields.
+//  It should return (record;next index).
+// parser will be called until it returns next index equal to length.
 // @param x (parser;fields;extra)
 // @param y data
 // @param z length
@@ -61,7 +61,7 @@
 
 // Constants
 
-// Flag names for central directory & file data.
+// Flag names for central directory & file data
 .finos.unzip.priv.flags:.finos.util.list(
   `encrypted_file;
   `compression_option_1;
@@ -81,7 +81,7 @@
   `reserved_15;
   )
 
-// Flag names for internal file attributes.
+// Flag names for internal file attributes
 .finos.unzip.priv.flags_iat:.finos.util.list(
   `text;
   `reserved_01;
@@ -101,7 +101,7 @@
   `unused_15;
   )
 
-// Flag names for extra field 0x5455 (extended timestamp).
+// Flag names for extra field 0x5455 (extended timestamp)
 .finos.unzip.priv.flags_xfd_0x5455:.finos.util.list(
   `mtime;
   `atime;
@@ -612,7 +612,7 @@
 // Public API
 
 // Set to true to verify extraction against unzip(1).
-// N.B. will not work if .finos.unzip.unzip is called from a thread
+// N.B. will not work if .finos.unzip.unzip is called from a thread.
 .finos.unzip.verify:0b
 
 // List files in an archive.
