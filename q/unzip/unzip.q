@@ -3,6 +3,18 @@
 
 // Utilities
 
+// Read bytes from either a file or a byte vector.
+// @param x hsym or bytes
+// @param y offset
+// @param z length
+// @return z bytes from x, starting at y
+.finos.unzip.priv.bytes:{$[-11h=t:type x;read1(x;y;z);4h=t;x y+til z;'`type]}
+
+// Count bytes from either a file or a byte vector.
+// @param x hsym or bytes
+// @return count of bytes in x
+.finos.unzip.priv.bcount:{$[-11h=t:type x;hcount;count]x}
+
 // Split a subsection of data into fields.
 // Starts from offset and takes sum fields entries, splitting them according.
 //  to fields.
@@ -467,6 +479,44 @@
 
   (r;exec y+nln+xln+csz+count dtd from r)}
 
+// Find offset of central directory signature in a zip vector.
+// Assumes last match is valid; more sophisticated algos are possible,
+//  but they can be implemented as needed.
+// @param x bytes
+// @return long
+.finos.unzip.priv.ovcds:{
+  last("c"$y)ss"c"$0x504b0506}
+
+// Find offset of central directory signature in a zip file.
+// Implemented via sliding four-byte read starting at end of file.
+// Assumes last match is valid; more sophisticated algos are possible,
+//  but they can be implemented as needed.
+// @param x hsym
+// @return long
+.finos.unzip.priv.ofcds:{
+  c:hcount x;
+  r:{(not 0x504b0506~y 0)&x>y 1}[c]{(read1(x;y-z 1;4);1+z 1)}[x;c]/(0x00000000;0);
+  $[0x504b0506~r 0;1+c-r 1;0N]}
+
+// Find offset of zip64 end of central directory locator signature in a zip vector.
+// Assumes last match is valid; more sophisticated algos are possible,
+//  but they can be implemented as needed.
+// @param x bytes
+// @return long
+.finos.unzip.priv.ovecls64:{
+  last("c"$y)ss"c"$0x504b0607}
+
+// Find offset of zip64 end of central directory locator signature in a zip file.
+// Implemented via sliding four-byte read starting at end of file.
+// Assumes last match is valid; more sophisticated algos are possible,
+//  but they can be implemented as needed.
+// @param x hsym
+// @return long
+.finos.unzip.priv.ofecls64:{
+  c:hcount x;
+  r:{(not 0x504b0607~y 0)&x>y 1}[c]{(read1(x;y-z 1;4);1+z 1)}[x;c]/(0x00000000;0);
+  $[0x504b0607~r 0;1+c-r 1;0N]}
+
 // Extract one file from an archive using unzip(1).
 // @param x hsym
 // @param y sym
@@ -487,11 +537,6 @@
 // See https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT,
 //  https://users.cs.jmu.edu/buchhofp/forensics/formats/pkzip.html,
 //  https://fossies.org/linux/zip/proginfo/extrafld.txt, etc.
-// TODO by default, should unzip according to central directory;
-//  add option to use current method (file scan)
-// TODO rewrite entire lib so files aren't read completely first
-//  probably means abstracting every data read so it can be an array
-//  range for in-memory data, but a three-arg read0 for file data
 // @param x sym
 // @param y hsym, character vector, or byte vector
 // @param z see above
@@ -501,22 +546,13 @@
     '`domain;
     ];
 
-  / accept file; save filename as n
-  / (n will be () if x is not an hsym)
-  if[-11h=type y;
-    n:y;
-    .finos.log.info"reading ",1_string n;
-    y:read1 y;
-    .finos.log.info"done reading ",1_string n;
-    ];
-
   / accept chars
   if[10h=type y;
     y:"x"$y;
     ];
 
-  / accept bytes
-  if[4h<>type y;
+  / accept hsym and bytes
+  if[$[-11h=t:type y;not":"=first string y;4h<>t];
     '`type;
     ];
 
@@ -526,41 +562,40 @@
       ];
     ];
 
-  .finos.log.info"processing ",$[-11h=type n;1_string n;"archive"];
+  .finos.log.info"processing ",$[-11h=t;1_string y;"archive"];
+
+  / get byte count
+  c:.finos.unzip.priv.bcount y;
 
   / look for central directory signature
-  / assume last match is valid
-  / more sophisticated algos are possible, but they can be implemented as needed
-  cds:("c"$y)ss"c"$0x504b0506;
-  if[1>count cds;
+  cds:$[4h=t;.finos.unzip.priv.ovcds;.finos.unzip.priv.ofcds]y;
+  if[null cds;
     '"no central directory signature";
     ];
-  cds:last cds;
 
   / parse end-of-central-directory record
-  ecd:.finos.unzip.priv.pecd y cds+til(count y)-cds;
+  ecd:.finos.unzip.priv.pecd .finos.unzip.priv.bytes[y;cds;c-cds];
 
   / punt on multi-disk archives
   if[0<>ecd`dnu;'`nyi];
   if[0<>ecd`dcd;'`nyi];
 
   / bytes of central directory record
-  cd:y exec cof+til csz from
+  cd:exec .finos.unzip.priv.bytes[y;cof;csz]from
     $[
       -1=ecd`cof; / zip64
         [
           / look for zip64 end of central directory locator signature
-          ecls64:("c"$y)ss"c"$0x504b0607;
-          if[1>count ecls64;
+          ecls64:$[4h=t;.finos.unzip.priv.ovecls64;.finos.unzip.priv.ofecls64]y;
+          if[null ecls64;
             '"no end of central directory locator";
             ];
-          ecls64:last ecls64;
 
           / parse zip64 end-of-central-directory locator record
-          ecl64:.finos.unzip.priv.pecl64 y ecls64+til(count y)-ecls64;
+          ecl64:.finos.unzip.priv.pecl64 .finos.unzip.priv.bytes[y;ecls64;c-ecls64];
 
           / parse zip64 end-of-central-directory record
-          ecd64:.finos.unzip.priv.pecd64 y(ecl64`cof)+til 12+.finos.unzip.priv.parseNum y(4+ecl64`cof)+til 8];
+          ecd64:.finos.unzip.priv.pecd64 .finos.unzip.priv.bytes[y;ecl64`cof;12+.finos.unzip.priv.parseNum .finos.unzip.priv.bytes[y;4+ecl64`cof;8]]];
       ecd];
 
   / parse central directory
@@ -577,11 +612,33 @@
         1!select name:fnm,size:usz,timestamp:mdt+mtm from cd];
     `unzip=x;
       [
-        / trim any leading garbage
-        y:(exec min lof from cd)_y;
+        / apply file filter, if any
+        if[not z~(::);
+          cd:select from cd where fnm in z;
+          ];
 
         / parse file data
-        fd:.finos.unzip.priv.parse[(.finos.unzip.priv.pfd;.finos.unzip.priv.wfd;z);y;($[-1=ecd`cof;ecd64;ecd]`cof)-exec min lof from cd];
+        fd:$[
+          .finos.unzip.filescan;
+            [
+              / read file if neccesary
+              if[-11h=type y;
+                y:read1 y;
+                ];
+
+              / trim any leading garbage
+              y:(exec min lof from cd)_y;
+
+              / extract all files
+              .finos.unzip.priv.parse[(.finos.unzip.priv.pfd;.finos.unzip.priv.wfd;z);y;($[-1=ecd`cof;ecd64;ecd]`cof)-exec min lof from cd]];
+          [
+            / extract each file mentioned in the central directory
+            / TODO probably over-reads (at least) the last file
+            f:{[w;x;y;z]
+              h:.finos.unzip.priv.split[w;0].finos.unzip.priv.bytes[x;y`lof;sum w];
+              first .finos.unzip.priv.pfd[(.finos.unzip.priv.bytes[x;y`lof;z-y`lof];::);sum w;h]};
+
+            cd f[.finos.unzip.priv.wfd;y]'c^exec next lof from cd]];
 
         r:exec fnm!fdu from fd;
 
@@ -592,13 +649,14 @@
             r z;
           r];
 
-        if[.finos.unzip.verify&-11h=type n;
+        if[.finos.unzip.verify&-11h=type y;
           .finos.log.info"verifying";
           v:r~$[
             -11h=type z;
-              .finos.unzip.priv.unzip_system[n]z;
-            {y!x y}[n .finos.unzip.priv.unzip_system/:]key r];
+              .finos.unzip.priv.unzip_system[y]z;
+            {y!x y}[y .finos.unzip.priv.unzip_system/:]key r];
           if[not v;
+            break;
             '`parse;
             ];
           .finos.log.info"verified";
@@ -613,7 +671,12 @@
 
 // Set to true to verify extraction against unzip(1).
 // N.B. will not work if .finos.unzip.unzip is called from a thread.
+// N.B. will not work in file scan mode.
 .finos.unzip.verify:0b
+
+// Set to true to extract files via file scan, rather than by using the
+//  central directory.
+.finos.unzip.filescan:0b
 
 // List files in an archive.
 // @param x hsym, character vector, or byte vector
