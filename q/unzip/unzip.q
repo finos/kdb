@@ -485,7 +485,7 @@
 // @param x bytes
 // @return long
 .finos.unzip.priv.ovcds:{
-  last("c"$y)ss"c"$0x504b0506}
+  last("c"$x)ss"c"$0x504b0506}
 
 // Find offset of central directory signature in a zip file.
 // Implemented via sliding four-byte read starting at end of file.
