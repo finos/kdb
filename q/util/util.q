@@ -37,12 +37,12 @@
 .finos.log.info    :{-1"INFO: "    ,x;}
 .finos.log.debug   :{-1"DEBUG: "   ,x;}
 
-.finos.util.rs  :{0b sv x xprev 0b vs y}     / right shift
+.finos.util.shr :{0b sv x xprev 0b vs y}     / right shift
 .finos.util.xor :{0b sv (<>/)   0b vs'(x;y)} / XOR
 .finos.util.land:{0b sv (&).    0b vs'(x;y)} / AND
 .finos.util.lnot:{0b sv not     0b vs x}     / NOT
 
-.finos.util.crc32:{.finos.util.lnot(.finos.util.lnot"i"$x){.finos.util.xor[.finos.util.rs[8]y]x .finos.util.xor[.finos.util.land[y]255i]0x0 sv 0x000000,"x"$z}[{8{$[x mod 2i;.finos.util.xor -306674912i;::].finos.util.rs[1]x}/x}each"i"$til 256]/y}
+.finos.util.crc32:{.finos.util.lnot(.finos.util.lnot"i"$x){.finos.util.xor[.finos.util.shr[8]y]x .finos.util.xor[.finos.util.land[y]255i]0x0 sv 0x000000,"x"$z}[{8{$[x mod 2i;.finos.util.xor -306674912i;::].finos.util.shr[1]x}/x}each"i"$til 256]/y}
 
 // Run and log garbage collection.
 .finos.util.free:{[].finos.log.debug"freed ",(string .Q.gc[])," bytes";}
