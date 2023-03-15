@@ -17,6 +17,11 @@
 .finos.util.compose:('[;])/
 
 // create a list. e.g. list(`a;1) -> (`a;1)
+// allows a trailing delimiter, e.g.
+// list(
+//     `a;
+//     1;
+//     )
 .finos.util.list:{$[104h=type x;1_-1_get x;x]}
 
 // create a dictionary. e.g. dict (1;2;3;4) -> 1 3!2 4
