@@ -437,11 +437,19 @@
       .finos.unzip.priv.parseNum cmp,
       {"v"$24 60 60 sv 1 1 2*2 sv'0 5 11 cut reverse .finos.unzip.priv.parseBits x}mtm,
       {.finos.util.ymd . 1980 0 0+2 sv'0 7 11 cut reverse .finos.unzip.priv.parseBits x}mdt,
-      .finos.unzip.priv.parseNum csz,
-      .finos.unzip.priv.parseNum usz,
       .finos.unzip.priv.parseNum nln,
       .finos.unzip.priv.parseNum xln
     from z;
+
+  if[r[`flg]`data_descriptor;
+      / data descriptor
+      r,:`crc`csz`usz!4 cut -12#x;
+      ];
+
+  r:update
+      .finos.unzip.priv.parseNum csz,
+      .finos.unzip.priv.parseNum usz
+    from r;
 
   r:update fnm:`$"c"$x y+til nln from r;
 
@@ -598,6 +606,9 @@
           ecd64:.finos.unzip.priv.pecd64 .finos.unzip.priv.bytes[y;ecl64`cof;12+.finos.unzip.priv.parseNum .finos.unzip.priv.bytes[y;4+ecl64`cof;8]]];
       ecd];
 
+  / start of central directory
+  scd:$[-1=ecd`cof;ecd64;ecd]`cof;
+
   / parse central directory
   .finos.log.debug"parsing central directory";
   cd:.finos.unzip.priv.parse[(.finos.unzip.priv.pcd;.finos.unzip.priv.wcd);cd;count cd];
@@ -612,6 +623,9 @@
         1!select name:fnm,size:usz,timestamp:mdt+mtm from cd];
     `unzip=x;
       [
+        / calculate next offsets
+        cd:update nof:scd^next lof from cd;
+
         / apply file filter, if any
         if[not z~(::);
           cd:select from cd where fnm in z;
@@ -630,15 +644,16 @@
               y:(exec min lof from cd)_y;
 
               / extract all files
-              .finos.unzip.priv.parse[(.finos.unzip.priv.pfd;.finos.unzip.priv.wfd;z);y;($[-1=ecd`cof;ecd64;ecd]`cof)-exec min lof from cd]];
+              .finos.unzip.priv.parse[(.finos.unzip.priv.pfd;.finos.unzip.priv.wfd;z);y;scd-exec min lof from cd]];
           [
             / extract each file mentioned in the central directory
-            / TODO probably over-reads (at least) the last file
             f:{[w;x;y;z]
               h:.finos.unzip.priv.split[w;0].finos.unzip.priv.bytes[x;y`lof;sum w];
               first .finos.unzip.priv.pfd[(.finos.unzip.priv.bytes[x;y`lof;z-y`lof];::);sum w;h]};
 
-            cd f[.finos.unzip.priv.wfd;y]'c^exec next lof from cd]];
+            / assume the end of the last file is the beginning of the central directory
+            / might be wrong if archive decryption header and/or archive extra data record are present?
+            cd f[.finos.unzip.priv.wfd;y]'exec nof from cd]];
 
         r:exec fnm!fdu from fd;
 
@@ -676,6 +691,7 @@
 
 // Set to true to extract files via file scan, rather than by using the
 //  central directory.
+// N.B. currently, will likely fail for data-descriptor-based archives
 .finos.unzip.filescan:0b
 
 // List files in an archive.
