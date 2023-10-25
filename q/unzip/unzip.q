@@ -629,6 +629,10 @@
         / apply file filter, if any
         if[not z~(::);
           cd:select from cd where fnm in z;
+          if[count e:exec(raze z)except fnm from cd;
+            {.finos.log.error(string x),": file not found in archive"}each e;
+            'first e;
+            ];
           ];
 
         / parse file data
