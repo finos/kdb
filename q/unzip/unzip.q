@@ -606,6 +606,28 @@
           ecd64:.finos.unzip.priv.pecd64 .finos.unzip.priv.bytes[y;ecl64`cof;12+.finos.unzip.priv.parseNum .finos.unzip.priv.bytes[y;4+ecl64`cof;8]]];
       ecd];
 
+  / check for empty zip
+  if[not count cd;
+      :$[
+        `list=x;
+          ([name:0#`]size:0#0Ni;timestamp:0#0Np);
+        `unzip=x;
+          $[
+            -11h=type z;
+              [
+                .finos.log.error(string z),": file not found in archive";
+                'z;
+                ];
+            11h=type z;
+              [
+                {.finos.log.error(string x),": file not found in archive"}each z;
+                'first z;
+                ];
+            z~(::);
+              ((0#`)!())];
+        '`domain];
+    ];
+
   / start of central directory
   scd:$[-1=ecd`cof;ecd64;ecd]`cof;
 
