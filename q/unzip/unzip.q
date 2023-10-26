@@ -503,7 +503,7 @@
 // @return long
 .finos.unzip.priv.ofcds:{
   c:hcount x;
-  r:{(not 0x504b0506~y 0)&x>y 1}[c]{(read1(x;y-z 1;4);1+z 1)}[x;c]/(0x00000000;0);
+  r:{(not 0x504b0506~y 0)&x>=y 1}[c]{(read1(x;y-z 1;4);1+z 1)}[x;c]/(0x00000000;0);
   $[0x504b0506~r 0;1+c-r 1;0N]}
 
 // Find offset of zip64 end of central directory locator signature in a zip vector.
