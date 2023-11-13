@@ -46,18 +46,8 @@ _// Second Monday of every month_
 - Action 2
 - ...
 
-### WebEx info
-**Webex** 
-* https://finos.webex.com/finos/j.php?MTID=me61719ca3c3295a7cc76762d78392bc3
-
-**Dial-in and Project Materials**
-- **US:** +1-415-655-0003 US Toll
-- **UK:** +44-20319-88141 UK Toll
-- **Access code:** 2704 417 0390
-- **GitHub Repos:** 
-  - https://github.com/finos/kdb
-  - https://github.com/finos/kdb-studio
-- **Wiki Page:** 
-  - https://finosfoundation.atlassian.net/wiki/spaces/DT/pages/329383945/kdb+Project
-- **KDB Metrics on FINOS**
-  - https://metrics.finos.org/goto/033b15c80f0d08cab70f40f4358932f6
+## Join Zoom Meeting
+- https://zoom.us/j/94523415326?pwd=NkJDaUtUUlZTcHVwcUJHdG0yRFJUdz09
+- Meeting ID: 945 2341 5326
+- Passcode: 361990
+- Find your local number: https://zoom.us/u/abTtYRZ0B6
