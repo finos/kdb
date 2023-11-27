@@ -47,7 +47,8 @@ _// Second Monday of every month_
 - ...
 
 ## Join Zoom Meeting
-- https://zoom.us/j/94523415326?pwd=NkJDaUtUUlZTcHVwcUJHdG0yRFJUdz09
+Join Zoom Meeting
+- https://zoom.us/j/94523415326
 - Meeting ID: 945 2341 5326
 - Passcode: 361990
 - Find your local number: https://zoom.us/u/abTtYRZ0B6
