@@ -360,6 +360,19 @@
 
       p[k]d];
 
+    / Info-ZIP Unix (previous new) ("Ux")
+    0x7855~r`id;
+      $[
+        not c; / central-header version (no data)
+          ();
+        [
+          k:.finos.util.table[`n`w`f](
+            `uid;2;.finos.unzip.priv.parseNum;
+            `gid;2;.finos.unzip.priv.parseNum;
+            );
+
+          p[k]d]];
+
     / Info-ZIP Unix (new) ("ux")
     0x7875~r`id;
       [
