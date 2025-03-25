@@ -31,11 +31,16 @@
 .finos.util.table:{flip x!flip(count x)cut .finos.util.list y}
 
 // log stubs
-.finos.log.critical:{-1"CRITICAL: ",x;}
-.finos.log.error   :{-1"ERROR: "   ,x;}
-.finos.log.warning :{-1"WARNING: " ,x;}
-.finos.log.info    :{-1"INFO: "    ,x;}
-.finos.log.debug   :{-1"DEBUG: "   ,x;}
+.finos.log.LEVELS:`critical`error`warning`info`debug
+.finos.log.priv.level:.finos.log.LEVELS?`info
+.finos.log.priv.log:{if[.finos.log.priv.level>=.finos.log.LEVELS?x;-1(string upper x),": ",y]}
+.finos.log.getLogLevel:{[].finos.log.LEVELS .finos.log.priv.level}
+.finos.log.setLogLevel:{.finos.log.priv.level:.finos.log.LEVELS?x}
+.finos.log.critical:.finos.log.priv.log`critical
+.finos.log.error   :.finos.log.priv.log`error
+.finos.log.warning :.finos.log.priv.log`warning
+.finos.log.info    :.finos.log.priv.log`info
+.finos.log.debug   :.finos.log.priv.log`debug
 
 .finos.util.shr :{0b sv x xprev 0b vs y}     / right shift
 .finos.util.xor :{0b sv (<>/)   0b vs'(x;y)} / XOR
