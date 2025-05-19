@@ -41,7 +41,7 @@
   };
 
 // return all non-single character namespaces in current process
-.finos.objutils.getall:{a:(enlist enlist "."),".",/:string key `;`$(a where 2<count each a)};
+.finos.objutils.getall:{a:(enlist enlist "."),".",/:string key `;{y where x y}[{$[99h=type x:get x;(1#.q)~1#x;0b]}']`$(a where 2<count each a)};
 
 .finos.objutils.objsize:{
   // count 0
