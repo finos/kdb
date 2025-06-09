@@ -32,19 +32,12 @@ _// Second Monday of every month_
 - (5 min) Convene, roll call, welcome new people.
 - [ ] Display [FINOS Antitrust Policy summary slide](https://github.com/finos/community/blob/master/governance/Compliance-Slides/Antitrust-Compliance-Slide.pdf) 
 - [ ] Review Meeting Notices (see above)
-- (5 min) Approve previous meeting minutes.
-- _Add Items Here_
-- (5 min) AOB, Q&A, Adjourn.
-
-## Decisions Made
-- Decision 1
-- Decision 2
-- ...
-
-## Action Items
-- Action 1
-- Action 2
-- ...
+- (5 min) Approve previous meeting minutes
+- (5 min) FINOS kdb+ Project charter refresh
+- (20 min) KX / kdb+ goings-on 
+- (10 min) Community building
+- (5 min) Brainstorming
+- (5 min) AOB, Q&A, Adjourn
 
 ## Join Zoom Meeting
 - https://zoom.us/j/94523415326?pwd=NkJDaUtUUlZTcHVwcUJHdG0yRFJUdz09
