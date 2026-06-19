@@ -179,6 +179,17 @@ if[()~key `.finos.dep.resolvers; .finos.dep.resolvers:(`$())!()];
     .finos.dep.priv.unload each exec moduleName from .finos.dep.list;
     };
 
+.finos.dep.useModule:{[name]
+    while[(ns:`$8?.Q.A,.Q.a)in key`.finos];
+    nsfull:.Q.dd[`.finos;ns];
+    nsfull set orig:(``z`q`Q`finos#get`);
+    ({.finos.dep.loadModule x};name) . nsfull;
+    updated:get nsfull;
+    ![`.finos;();0b;enlist ns];
+    newns:(key[updated]except key orig)#updated;
+    .finos.dep:updated[`finos;`dep];
+    newns};
+
 .z.exit:{[handler;x]
     .finos.dep.priv.unloadAll[];
     handler[x]}$[()~key `.z.exit; (::); .z.exit];
