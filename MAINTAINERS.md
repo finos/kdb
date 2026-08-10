@@ -10,7 +10,6 @@ This file lists the maintainers of this repository.
 | @alvin-c-shih | Alvin Shih | Morgan Stanley | alvin.shih@morganstanley.com |
 | @bingenito | Brian Ingenito | Morgan Stanley | brian.ingenito@morganstanley.com |
 | @gyorokpeter | Peter Gyorok | KX | pgyorok@kx.com |
-| @punx120 | *please add name* | *please add organization* | *please add email* |
 | @rdffy | Ross Duffy | Morgan Stanley | ross.duffy@morganstanley.com |
 
 For information about maintainer responsibilities and resources, see the [FINOS Maintainers Cheatsheet](https://community.finos.org/docs/finos-maintainers-cheatsheet).
